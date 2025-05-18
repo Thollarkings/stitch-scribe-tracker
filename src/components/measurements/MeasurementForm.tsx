@@ -5,14 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger 
+} from '@/components/ui/collapsible';
 
 interface MeasurementData {
   [key: string]: string | number | Date | undefined;
@@ -27,6 +31,7 @@ interface MeasurementFormProps {
 const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementFormProps) => {
   const [formData, setFormData] = useState<MeasurementData>({});
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [measurementsOpen, setMeasurementsOpen] = useState(false);
 
   useEffect(() => {
     if (editingIndex !== null) {
@@ -230,30 +235,50 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
 
           <Separator className="my-6" />
 
-          <Tabs defaultValue="upper-body" className="w-full">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-6">
-              <TabsTrigger value="upper-body">Upper Body</TabsTrigger>
-              <TabsTrigger value="sleeves">Sleeves</TabsTrigger>
-              <TabsTrigger value="lower-body">Lower Body</TabsTrigger>
-              <TabsTrigger value="trousers">Trousers</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="upper-body">
-              {renderMeasurementInputs(upperBodyFields)}
-            </TabsContent>
-
-            <TabsContent value="sleeves">
-              {renderMeasurementInputs(sleevesFields)}
-            </TabsContent>
-
-            <TabsContent value="lower-body">
-              {renderMeasurementInputs(lowerBodyFields)}
-            </TabsContent>
-
-            <TabsContent value="trousers">
-              {renderMeasurementInputs(trouserFields)}
-            </TabsContent>
-          </Tabs>
+          {/* Main Dropdown Menu with Subheadings */}
+          <Collapsible
+            open={measurementsOpen}
+            onOpenChange={setMeasurementsOpen}
+            className="w-full border border-border rounded-md"
+          >
+            <CollapsibleTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="flex w-full justify-between items-center p-4 hover:bg-accent hover:text-accent-foreground font-medium text-left"
+              >
+                <span>View Client's Measurements</span>
+                <ChevronDown className={cn(
+                  "h-4 w-4 transition-transform duration-200",
+                  measurementsOpen ? "transform rotate-180" : ""
+                )} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="p-4 space-y-6">
+              {/* Upper Body Measurements */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium border-b pb-2">Upper Body Measurements</h3>
+                {renderMeasurementInputs(upperBodyFields)}
+              </div>
+              
+              {/* Sleeves Measurements */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium border-b pb-2">Sleeves Measurements</h3>
+                {renderMeasurementInputs(sleevesFields)}
+              </div>
+              
+              {/* Lower Body Measurements */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium border-b pb-2">Lower Body Measurements</h3>
+                {renderMeasurementInputs(lowerBodyFields)}
+              </div>
+              
+              {/* Trousers Measurements */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium border-b pb-2">Trousers Measurements</h3>
+                {renderMeasurementInputs(trouserFields)}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           <Separator className="my-6" />
 
