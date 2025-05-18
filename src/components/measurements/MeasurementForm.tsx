@@ -7,12 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface MeasurementData {
-  [key: string]: string | number;
+  [key: string]: string | number | Date | undefined;
   name?: string;
   phone?: string;
   timestamp?: string;
+  collectionDateType?: string;
+  collectionDate?: Date;
 }
 
 interface MeasurementFormProps {
@@ -23,13 +31,23 @@ interface MeasurementFormProps {
 
 const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementFormProps) => {
   const [formData, setFormData] = useState<MeasurementData>({});
+  const [date, setDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     if (editingIndex !== null) {
       const measurements = JSON.parse(localStorage.getItem('clientMeasurements') || '[]');
-      setFormData(measurements[editingIndex] || {});
+      const measurement = measurements[editingIndex] || {};
+      
+      // Convert collectionDate string back to Date object if it exists
+      if (measurement.collectionDate) {
+        measurement.collectionDate = new Date(measurement.collectionDate);
+        setDate(measurement.collectionDate);
+      }
+      
+      setFormData(measurement);
     } else {
       setFormData({});
+      setDate(undefined);
     }
   }, [editingIndex]);
 
@@ -37,14 +55,25 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleCollectionTypeChange = (value: string) => {
+    setFormData({ ...formData, collectionDateType: value });
+  };
+
+  const handleCollectionDateChange = (date: Date | undefined) => {
+    setDate(date);
+    setFormData({ ...formData, collectionDate: date });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({ ...formData, timestamp: new Date().toISOString() });
     setFormData({});
+    setDate(undefined);
   };
 
   const handleCancel = () => {
     setFormData({});
+    setDate(undefined);
     setEditingIndex(null);
   };
 
@@ -138,6 +167,59 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
                 value={formData.phone || ''}
                 onChange={handleChange}
               />
+            </div>
+          </div>
+
+          {/* Collection Date Section */}
+          <div className="bg-muted/30 p-4 rounded-lg my-6">
+            <Label className="text-base font-medium mb-2 block">Collection Date</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label>Date Type</Label>
+                <RadioGroup 
+                  value={formData.collectionDateType as string || 'estimated'} 
+                  onValueChange={handleCollectionTypeChange}
+                  className="flex flex-col space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="estimated" id="estimated" />
+                    <Label htmlFor="estimated">Estimated</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="exact" id="exact" />
+                    <Label htmlFor="exact">Exact</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="space-y-3">
+                <Label>
+                  {formData.collectionDateType === 'exact' ? 'Exact Collection Date' : 'Estimated Collection Date'}
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="collectionDate"
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, 'PPP') : <span>Select date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={handleCollectionDateChange}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
 
