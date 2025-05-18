@@ -16,11 +16,6 @@ import { cn } from '@/lib/utils';
 
 interface MeasurementData {
   [key: string]: string | number | Date | undefined;
-  name?: string;
-  phone?: string;
-  timestamp?: string;
-  collectionDateType?: string;
-  collectionDate?: Date;
 }
 
 interface MeasurementFormProps {
