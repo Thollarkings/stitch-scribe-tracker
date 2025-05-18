@@ -61,12 +61,22 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
 
   const handleCollectionDateChange = (date: Date | undefined) => {
     setDate(date);
-    setFormData({ ...formData, collectionDate: date });
+    if (date) {
+      setFormData({ ...formData, collectionDate: date });
+    } else {
+      // Create a new object without the collectionDate property
+      const { collectionDate, ...rest } = formData;
+      setFormData(rest);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, timestamp: new Date().toISOString() });
+    
+    // Create a serializable version of the data for storage
+    const dataToSave = { ...formData, timestamp: new Date().toISOString() };
+    
+    onSave(dataToSave);
     setFormData({});
     setDate(undefined);
   };
