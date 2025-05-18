@@ -4,9 +4,13 @@ import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, ChevronDown } from 'lucide-react';
 
 interface MeasurementCardProps {
   measurement: Record<string, any>;
@@ -17,6 +21,7 @@ interface MeasurementCardProps {
 
 const MeasurementCard = ({ measurement, index, onDelete, handleEdit }: MeasurementCardProps) => {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Define measurement fields with labels and keys
   const measurementFields = [
@@ -64,6 +69,15 @@ const MeasurementCard = ({ measurement, index, onDelete, handleEdit }: Measureme
   });
   const timeAgo = formatDistanceToNow(timestamp, { addSuffix: true });
 
+  // Format collection date if available
+  const collectionDate = measurement.collectionDate 
+    ? new Date(measurement.collectionDate).toLocaleString('en-US', { 
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    : null;
+
   const handleDeleteClick = () => {
     if (confirmingDelete) {
       onDelete(index);
@@ -103,40 +117,55 @@ const MeasurementCard = ({ measurement, index, onDelete, handleEdit }: Measureme
       </CardHeader>
 
       <CardContent className="pt-4">
-        <Accordion type="single" collapsible className="w-full">
-          {measurementFields.map((section, idx) => (
-            <AccordionItem key={idx} value={`section-${idx}`}>
-              <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                {section.label} Measurements
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                  {section.items.map(item => measurement[item.key] && (
-                    <div key={item.key} className="flex justify-between p-1.5 border rounded border-border/60">
-                      <span className="text-muted-foreground">{item.label}:</span>
-                      <span className="font-medium">{measurement[item.key]}</span>
-                    </div>
-                  ))}
+        <Collapsible
+          open={isOpen}
+          onOpenChange={setIsOpen}
+          className="w-full"
+        >
+          <CollapsibleTrigger className="flex w-full justify-between items-center rounded-md p-2 hover:bg-muted text-sm font-medium">
+            View Client's Measurements
+            <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            {measurementFields.map((section, idx) => {
+              // Only show sections with at least one value
+              const hasValues = section.items.some(item => measurement[item.key]);
+              if (!hasValues) return null;
+              
+              return (
+                <div key={`section-${idx}`} className="mb-4">
+                  <h4 className="text-sm font-medium mb-2 text-muted-foreground">{section.label} Measurements</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                    {section.items.map(item => measurement[item.key] && (
+                      <div key={item.key} className="flex justify-between p-1.5 border rounded border-border/60">
+                        <span className="text-muted-foreground">{item.label}:</span>
+                        <span className="font-medium">{measurement[item.key]}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {idx < measurementFields.length - 1 && hasValues && <Separator className="mt-3" />}
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-          
-          {measurement.comments && (
-            <AccordionItem value="comments">
-              <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                Additional Comments
-              </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-sm whitespace-pre-wrap">{measurement.comments}</p>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-        </Accordion>
+              );
+            })}
+            
+            {measurement.comments && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2 text-muted-foreground">Additional Comments</h4>
+                <p className="text-sm whitespace-pre-wrap p-2 border rounded border-border/60">{measurement.comments}</p>
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
       </CardContent>
       
-      <CardFooter className="text-xs text-muted-foreground pt-0 pb-2">
-        Recorded: {formattedDate}
+      <CardFooter className="text-xs text-muted-foreground pt-0 pb-2 flex flex-wrap gap-2">
+        <span>Recorded: {formattedDate}</span>
+        {collectionDate && (
+          <>
+            <span className="text-muted-foreground">•</span>
+            <span>Collection Date: {collectionDate}</span>
+          </>
+        )}
       </CardFooter>
     </Card>
   );
