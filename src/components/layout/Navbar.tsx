@@ -19,9 +19,10 @@ const Navbar = ({ searchTerm, setSearchTerm, toggleForm, formVisible }: NavbarPr
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <img 
-                src="/lovable-uploads/6cdf7129-7b9f-42d8-968f-c322feb1f3d8.png" 
+                src="logo.png" 
                 alt="Tailor's Log Book" 
-                className="h-12 w-auto" 
+                className="h-16 w-16 rounded-full border-2 border-white/20"
+                style={{ filter: 'drop-shadow(0 0 10px rgba(4, 3, 0, 0.5))' }} // Tailor's Gold shadow 
               />
               <div>
                 <h1 className="text-3xl font-bold font-serif">Tailor's Log Book</h1>
