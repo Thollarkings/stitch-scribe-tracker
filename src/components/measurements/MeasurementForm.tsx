@@ -14,9 +14,14 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Update the interface to properly handle Date objects
 interface MeasurementData {
-  [key: string]: string | number | undefined;
-  collectionDate?: Date;
+  name?: string;
+  phone?: string;
+  comments?: string;
+  collectionDateType?: string;
+  timestamp?: string;
+  [key: string]: string | number | Date | undefined;
 }
 
 interface MeasurementFormProps {
@@ -26,7 +31,7 @@ interface MeasurementFormProps {
 }
 
 const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementFormProps) => {
-  const [formData, setFormData] = useState<Omit<MeasurementData, 'collectionDate'>>({});
+  const [formData, setFormData] = useState<MeasurementData>({});
   const [date, setDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
@@ -58,10 +63,11 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
   const handleCollectionDateChange = (date: Date | undefined) => {
     setDate(date);
     if (date) {
-      setFormData(prev => ({ ...prev, collectionDate: date }));
+      // Add the date directly to formData
+      setFormData({ ...formData, collectionDate: date });
     } else {
       // Create a new object without the collectionDate property
-      const { collectionDate, ...rest } = formData as MeasurementData;
+      const { collectionDate, ...rest } = formData;
       setFormData(rest);
     }
   };
@@ -70,7 +76,12 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
     e.preventDefault();
     
     // Create a serializable version of the data for storage
-    const dataToSave = { ...formData, timestamp: new Date().toISOString(), collectionDate: date };
+    const dataToSave = { 
+      ...formData,
+      timestamp: new Date().toISOString(),
+      // Use the date state instead of trying to add it here
+      // The collectionDate is already in formData if it was set
+    };
     
     onSave(dataToSave);
     setFormData({});
@@ -129,7 +140,11 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
             name={field.name}
             type="number"
             placeholder={`Enter ${field.label.toLowerCase()}`}
-            value={(formData[field.name] as string | number) || ''}
+            value={
+              typeof formData[field.name] === 'number' || typeof formData[field.name] === 'string' 
+                ? formData[field.name] 
+                : ''
+            }
             onChange={handleChange}
             className="w-full"
             min="0"
@@ -157,7 +172,7 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
                 name="name"
                 required
                 placeholder="Full name"
-                value={(formData.name as string) || ''}
+                value={formData.name || ''}
                 onChange={handleChange}
               />
             </div>
@@ -170,7 +185,7 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
                 placeholder="Phone number"
                 pattern="[\+]?[\d\- ]+"
                 title="Phone number with optional +, - or spaces"
-                value={(formData.phone as string) || ''}
+                value={formData.phone || ''}
                 onChange={handleChange}
               />
             </div>
@@ -183,7 +198,7 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
               <div className="space-y-3">
                 <Label>Date Type</Label>
                 <RadioGroup 
-                  value={(formData.collectionDateType as string) || 'estimated'} 
+                  value={formData.collectionDateType as string || 'estimated'} 
                   onValueChange={handleCollectionTypeChange}
                   className="flex flex-col space-y-1"
                 >
@@ -264,7 +279,7 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
               id="comments"
               name="comments"
               placeholder="Special requirements, preferences, fabric details..."
-              value={(formData.comments as string) || ''}
+              value={formData.comments || ''}
               onChange={handleChange}
               className="min-h-[120px]"
             />
