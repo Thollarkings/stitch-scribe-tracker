@@ -85,11 +85,20 @@ const MeasurementCard = ({ measurement, index, onDelete, handleEdit }: Measureme
   const handleDeleteClick = () => {
     if (confirmingDelete) {
       onDelete(index);
+      setConfirmingDelete(false); // Reset confirmation state after deletion
     } else {
       setConfirmingDelete(true);
-      setTimeout(() => setConfirmingDelete(false), 3000); // Reset after 3 seconds
+      // Reset confirmation after 3 seconds if user doesn't confirm
+      const timer = setTimeout(() => setConfirmingDelete(false), 3000);
+      return () => clearTimeout(timer);
     }
   };
+
+  // Reset confirmation if component unmounts or if index changes
+  // This prevents the confirmation state from persisting across different entries
+  React.useEffect(() => {
+    return () => setConfirmingDelete(false);
+  }, [index]);
 
   return (
     <Card className="mb-4 border-l-4 border-l-tailor-gold overflow-hidden animate-fade-in">

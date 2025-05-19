@@ -80,12 +80,9 @@ const Index = () => {
   };
 
   const handleExportAll = () => {
-    // For mobile devices, show a dialog to input filename
-    if (window.innerWidth <= 768) {
-      setExportDialogOpen(true);
-    } else {
-      downloadExportedData();
-    }
+    // Always show dialog for filename input regardless of device
+    setExportFilename('tailors_logbook_export');
+    setExportDialogOpen(true);
   };
 
   const downloadExportedData = (customFilename?: string) => {

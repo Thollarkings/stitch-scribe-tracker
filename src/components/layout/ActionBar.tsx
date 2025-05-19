@@ -20,7 +20,7 @@ const ActionBar = ({ onExport, onImportClick }: ActionBarProps) => {
           onClick={onExport}
         >
           <Download className="h-4 w-4" />
-          <span>Export</span>
+          <span className="block">Export</span>
         </Button>
         
         <Button
@@ -29,7 +29,7 @@ const ActionBar = ({ onExport, onImportClick }: ActionBarProps) => {
           onClick={onImportClick}
         >
           <Upload className="h-4 w-4" />
-          <span>Import</span>
+          <span className="block">Import</span>
         </Button>
       </div>
     </div>
