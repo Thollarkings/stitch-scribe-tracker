@@ -87,16 +87,27 @@ const Index = () => {
 
   const downloadExportedData = (customFilename?: string) => {
     try {
-      const filename = customFilename || 'tailors_logbook_export';
-      const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(measurements, null, 2))}`;
+      const filename = (customFilename || 'tailors_logbook_export').replace(/[^a-zA-Z0-9-_]/g, '_');
+      const jsonStr = JSON.stringify(measurements, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
       const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute('href', dataStr);
-      downloadAnchor.setAttribute('download', `${filename}.json`);
+      downloadAnchor.href = url;
+      downloadAnchor.download = `${filename}.json`;
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       document.body.removeChild(downloadAnchor);
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       
       toast.success("Data exported successfully");
+      
+      // Mobile-specific guidance toast
+      if (/Mobi|Android/i.test(navigator.userAgent)) {
+        toast.info("File saved to your device's Downloads folder. If you can't find it, check your Files app or Downloads folder.");
+      }
+      
       setExportDialogOpen(false);
     } catch (error) {
       console.error("Error exporting data:", error);
