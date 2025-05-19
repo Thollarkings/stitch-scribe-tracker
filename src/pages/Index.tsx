@@ -174,7 +174,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-gradient-to-r from-indigo-200 via-gray-100 to-indigo-200">
       <Navbar 
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -182,7 +182,7 @@ const Index = () => {
         formVisible={formVisible}
       />
       
-      <div className="container mx-auto px-4 py-6 flex-1">
+      <div className="container mx-auto px-4 py-6 flex-1 bg-indigo-50">
         {formVisible && (
           <div className="mb-6">
             <MeasurementForm 
@@ -243,7 +243,7 @@ const Index = () => {
         </Dialog>
       </div>
       
-      <footer className="py-4 text-center text-sm text-muted-foreground border-t">
+      <footer className="py-4 text-center text-sm text-gray-700 border-t">
         <p>&copy; Thollarkings {new Date().getFullYear()} - Tailor's Log Book</p>
       </footer>
     </div>

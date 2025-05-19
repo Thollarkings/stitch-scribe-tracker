@@ -14,7 +14,7 @@ interface NavbarProps {
 const Navbar = ({ searchTerm, setSearchTerm, toggleForm, formVisible }: NavbarProps) => {
   return (
     <div className="sticky top-0 z-10 w-full">
-      <div className="navy-gradient text-white shadow-md">
+      <div className="bg-gradient-to-r from-[#001f3f] via-navy-800 to-indigo-900 text-white shadow-md">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -24,8 +24,8 @@ const Navbar = ({ searchTerm, setSearchTerm, toggleForm, formVisible }: NavbarPr
                 className="h-12 w-auto" 
               />
               <div>
-                <h1 className="text-2xl font-bold font-serif">Tailor's Log Book</h1>
-                <p className="text-xs md:text-sm text-white/80">Record, track & deliver with precision</p>
+                <h1 className="text-3xl font-bold font-serif">Tailor's Log Book</h1>
+                <p className="text-xs md:text-base text-white/80">Record, track & deliver with precision</p>
               </div>
             </div>
             

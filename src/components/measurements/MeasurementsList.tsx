@@ -26,7 +26,7 @@ const MeasurementsList = ({ measurements, onDelete, handleEdit, searchTerm }: Me
   }
 
   return (
-    <div className="space-y-4 mt-4">
+    <div className="space-y-4 mt-4 bg-purple-50 p-4 rounded-lg">
       {measurements.map((measurement, index) => (
         <MeasurementCard
           key={index}

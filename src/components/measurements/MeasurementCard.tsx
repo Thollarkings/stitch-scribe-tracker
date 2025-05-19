@@ -101,11 +101,11 @@ const MeasurementCard = ({ measurement, index, onDelete, handleEdit }: Measureme
   }, [index]);
 
   return (
-    <Card className="mb-4 border-l-4 border-l-tailor-gold overflow-hidden animate-fade-in">
-      <CardHeader className="bg-muted/30 pb-2">
+    <Card className="mb-10 border-l-4 border-l-tailor-gold overflow-hidden animate-fade-in shadow-2xl">
+      <CardHeader className="bg-gradient-to-r from-blue-200 via-navy-800 to-indigo-100 text-black-900 pb-2">
         <div className="flex flex-wrap justify-between items-start gap-2">
           <div>
-            <h3 className="text-lg font-semibold mb-0">{measurement.name}</h3>
+            <h3 className="text-2xl font-semibold mb-0">{measurement.name}</h3>
             <div className="text-sm text-muted-foreground flex flex-wrap gap-2 items-center">
               <span>{measurement.phone}</span>
               <Badge variant="outline" className="text-xs">
