@@ -21,6 +21,7 @@ interface MeasurementData {
   comments?: string;
   collectionDateType?: string;
   timestamp?: string;
+  collectionDate?: Date;
   [key: string]: string | number | Date | undefined;
 }
 
@@ -141,8 +142,9 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
             type="number"
             placeholder={`Enter ${field.label.toLowerCase()}`}
             value={
+              // Ensure we only pass string or number to Input value
               typeof formData[field.name] === 'number' || typeof formData[field.name] === 'string' 
-                ? formData[field.name] 
+                ? formData[field.name] as string | number
                 : ''
             }
             onChange={handleChange}
