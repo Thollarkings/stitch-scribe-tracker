@@ -2,6 +2,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import Navbar from '@/components/layout/Navbar';
 import ActionBar from '@/components/layout/ActionBar';
 import MeasurementForm from '@/components/measurements/MeasurementForm';
@@ -12,6 +15,8 @@ const Index = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formVisible, setFormVisible] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFilename, setExportFilename] = useState('tailors_logbook_export');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -75,19 +80,35 @@ const Index = () => {
   };
 
   const handleExportAll = () => {
+    // For mobile devices, show a dialog to input filename
+    if (window.innerWidth <= 768) {
+      setExportDialogOpen(true);
+    } else {
+      downloadExportedData();
+    }
+  };
+
+  const downloadExportedData = (customFilename?: string) => {
     try {
+      const filename = customFilename || 'tailors_logbook_export';
       const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(measurements, null, 2))}`;
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute('href', dataStr);
-      downloadAnchor.setAttribute('download', 'tailors_logbook_export.json');
+      downloadAnchor.setAttribute('download', `${filename}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       document.body.removeChild(downloadAnchor);
+      
       toast.success("Data exported successfully");
+      setExportDialogOpen(false);
     } catch (error) {
       console.error("Error exporting data:", error);
       toast.error("Failed to export data");
     }
+  };
+
+  const handleExportConfirm = () => {
+    downloadExportedData(exportFilename);
   };
 
   const handleImportClick = () => {
@@ -187,6 +208,31 @@ const Index = () => {
           className="hidden"
           onChange={handleImportAll}
         />
+
+        <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Export Measurements</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label htmlFor="filename" className="text-sm font-medium">Filename</label>
+                <Input
+                  id="filename"
+                  type="text"
+                  value={exportFilename}
+                  onChange={(e) => setExportFilename(e.target.value)}
+                  placeholder="Enter filename..."
+                />
+                <span className="text-xs text-muted-foreground">.json will be added automatically</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setExportDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleExportConfirm}>Export</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       
       <footer className="py-4 text-center text-sm text-muted-foreground border-t">

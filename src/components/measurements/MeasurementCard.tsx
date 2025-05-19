@@ -67,6 +67,7 @@ const MeasurementCard = ({ measurement, index, onDelete, handleEdit }: Measureme
     hour: '2-digit',
     minute: '2-digit'
   });
+
   const timeAgo = formatDistanceToNow(timestamp, { addSuffix: true });
 
   // Format collection date if available
@@ -77,6 +78,9 @@ const MeasurementCard = ({ measurement, index, onDelete, handleEdit }: Measureme
         day: 'numeric'
       })
     : null;
+
+  // Get collection date type (estimated or exact)
+  const collectionDateType = measurement.collectionDateType || 'estimated';
 
   const handleDeleteClick = () => {
     if (confirmingDelete) {
@@ -163,7 +167,9 @@ const MeasurementCard = ({ measurement, index, onDelete, handleEdit }: Measureme
         {collectionDate && (
           <>
             <span className="text-muted-foreground">•</span>
-            <span>Collection Date: {collectionDate}</span>
+            <span>
+              ({collectionDateType === 'exact' ? 'Exact' : 'Estimated'}) Collection Date: {collectionDate}
+            </span>
           </>
         )}
       </CardFooter>

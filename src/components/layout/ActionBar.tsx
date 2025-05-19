@@ -20,7 +20,7 @@ const ActionBar = ({ onExport, onImportClick }: ActionBarProps) => {
           onClick={onExport}
         >
           <Download className="h-4 w-4" />
-          <span className="hidden sm:inline">Export</span>
+          <span>Export</span>
         </Button>
         
         <Button
@@ -29,7 +29,7 @@ const ActionBar = ({ onExport, onImportClick }: ActionBarProps) => {
           onClick={onImportClick}
         >
           <Upload className="h-4 w-4" />
-          <span className="hidden sm:inline">Import</span>
+          <span>Import</span>
         </Button>
       </div>
     </div>

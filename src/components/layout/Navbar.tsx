@@ -46,7 +46,7 @@ const Navbar = ({ searchTerm, setSearchTerm, toggleForm, formVisible }: NavbarPr
                 className="bg-tailor-gold text-tailor-navy hover:bg-tailor-gold/90 flex items-center gap-1"
               >
                 <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">{formVisible ? 'Hide Form' : 'New Client'}</span>
+                <span>{formVisible ? 'Hide Form' : 'New Client'}</span>
               </Button>
             </div>
           </div>
