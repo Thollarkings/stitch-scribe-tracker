@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,31 +26,29 @@ interface MeasurementData {
 
 interface MeasurementFormProps {
   onSave: (data: MeasurementData) => void;
-  editingIndex: number | null;
+  editingData?: MeasurementData; // Changed from editingIndex to editingData
   setEditingIndex: (index: number | null) => void;
 }
 
-const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementFormProps) => {
+const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFormProps) => {
   const [formData, setFormData] = useState<MeasurementData>({});
   const [date, setDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
-    if (editingIndex !== null) {
-      const measurements = JSON.parse(localStorage.getItem('clientMeasurements') || '[]');
-      const measurement = measurements[editingIndex] || {};
+    if (editingData) {
+      // Set form data from editingData
+      setFormData(editingData);
       
       // Convert collectionDate string back to Date object if it exists
-      if (measurement.collectionDate) {
-        measurement.collectionDate = new Date(measurement.collectionDate);
-        setDate(measurement.collectionDate);
+      if (editingData.collectionDate) {
+        const dateObj = new Date(editingData.collectionDate);
+        setDate(dateObj);
       }
-      
-      setFormData(measurement);
     } else {
       setFormData({});
       setDate(undefined);
     }
-  }, [editingIndex]);
+  }, [editingData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -160,7 +157,7 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
     <Card className="w-full border border-border shadow-md animate-fade-in">
       <CardHeader className="bg-muted/50">
         <CardTitle className="text-xl">
-          {editingIndex !== null ? 'Edit Client Measurements' : 'New Client Measurements'}
+          {editingData ? 'Edit Client Measurements' : 'New Client Measurements'}
         </CardTitle>
       </CardHeader>
 
@@ -300,7 +297,7 @@ const MeasurementForm = ({ onSave, editingIndex, setEditingIndex }: MeasurementF
             type="submit"
             className="bg-tailor-navy hover:bg-tailor-lightnav text-white"
           >
-            {editingIndex !== null ? 'Update Measurements' : 'Save Measurements'}
+            {editingData ? 'Update Measurements' : 'Save Measurements'}
           </Button>
         </CardFooter>
       </form>
