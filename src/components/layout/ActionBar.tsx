@@ -1,6 +1,5 @@
 
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { Upload, Download } from 'lucide-react';
 
 interface ActionBarProps {
