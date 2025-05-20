@@ -9,8 +9,11 @@ import Navbar from '@/components/layout/Navbar';
 import ActionBar from '@/components/layout/ActionBar';
 import MeasurementForm from '@/components/measurements/MeasurementForm';
 import MeasurementsList from '@/components/measurements/MeasurementsList';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
+  const { user } = useAuth();
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,38 +23,59 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    loadMeasurements();
-  }, []);
+    if (user) {
+      fetchMeasurements();
+    }
+  }, [user]);
 
-  const loadMeasurements = () => {
+  const fetchMeasurements = async () => {
     try {
-      const data = JSON.parse(localStorage.getItem('clientMeasurements') || '[]');
-      // Sort the measurements by timestamp in descending order
-      const sortedData = data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setMeasurements(sortedData);
+      const { data, error } = await supabase
+        .from('measurements')
+        .select('*')
+        .order('timestamp', { ascending: false });
+      
+      if (error) throw error;
+      
+      setMeasurements(data || []);
     } catch (error) {
-      console.error("Error loading measurements:", error);
-      toast.error("Failed to load saved measurements");
-      setMeasurements([]);
+      console.error("Error fetching measurements:", error);
+      toast.error("Failed to load measurements");
     }
   };
 
-  const handleSave = (measurementData: any) => {
+  const handleSave = async (measurementData: any) => {
     try {
-      const updatedMeasurements = [...measurements];
+      // Add user_id to the measurement data
+      const measurementWithUser = {
+        ...measurementData,
+        user_id: user?.id,
+      };
+
       if (editingIndex !== null) {
-        updatedMeasurements[editingIndex] = measurementData;
-        setEditingIndex(null);
+        // Update existing measurement
+        const { error } = await supabase
+          .from('measurements')
+          .update(measurementWithUser)
+          .eq('id', measurementWithUser.id);
+        
+        if (error) throw error;
+        
         toast.success("Client measurements updated successfully");
+        setEditingIndex(null);
       } else {
-        updatedMeasurements.push(measurementData);
+        // Insert new measurement
+        const { error } = await supabase
+          .from('measurements')
+          .insert(measurementWithUser);
+        
+        if (error) throw error;
+        
         toast.success(`${measurementData.name}'s measurements saved`);
       }
 
-      localStorage.setItem('clientMeasurements', JSON.stringify(updatedMeasurements));
-      // Sort again after saving to maintain order
-      const sortedData = updatedMeasurements.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setMeasurements(sortedData);
+      // Refresh measurements
+      fetchMeasurements();
       setFormVisible(false);
     } catch (error) {
       console.error("Error saving measurements:", error);
@@ -59,13 +83,18 @@ const Index = () => {
     }
   };
 
-  const handleDelete = (index: number) => {
+  const handleDelete = async (index: number) => {
     try {
-      const deletedName = measurements[index].name;
-      const updatedMeasurements = measurements.filter((_, i) => i !== index);
-      localStorage.setItem('clientMeasurements', JSON.stringify(updatedMeasurements));
-      setMeasurements(updatedMeasurements);
-      toast.success(`${deletedName}'s record deleted`);
+      const measurementToDelete = measurements[index];
+      const { error } = await supabase
+        .from('measurements')
+        .delete()
+        .eq('id', measurementToDelete.id);
+      
+      if (error) throw error;
+      
+      toast.success(`${measurementToDelete.name}'s record deleted`);
+      fetchMeasurements();
     } catch (error) {
       console.error("Error deleting measurement:", error);
       toast.error("Failed to delete measurement");
@@ -125,33 +154,41 @@ const Index = () => {
     }
   };
 
-  const handleImportAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportAll = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const result = e.target?.result;
         if (typeof result !== 'string') return;
         
         const importedData = JSON.parse(result);
         if (Array.isArray(importedData)) {
-          const mergedData = [...measurements, ...importedData];
-          const uniqueData = mergedData.filter((item, index, self) =>
-            index === self.findIndex((t) => 
-              t.timestamp === item.timestamp && t.name === item.name
-            )
-          );
-          localStorage.setItem('clientMeasurements', JSON.stringify(uniqueData));
-          setMeasurements(uniqueData);
+          // Add user_id to each imported record
+          const dataWithUserId = importedData.map(item => ({
+            ...item,
+            user_id: user?.id,
+            // Remove any existing id to let the database generate new ones
+            id: undefined
+          }));
+          
+          // Insert imported data into Supabase
+          const { error } = await supabase
+            .from('measurements')
+            .insert(dataWithUserId);
+          
+          if (error) throw error;
+          
           toast.success(`Imported ${importedData.length} records`);
+          fetchMeasurements();
         } else {
           toast.error('Invalid JSON file. Please ensure it contains an array of measurements.');
         }
       } catch (error) {
         console.error("Error importing data:", error);
-        toast.error('Invalid JSON file. Please check the file content.');
+        toast.error('Failed to import data. Please check the file format.');
       }
     };
     reader.readAsText(file);
@@ -187,7 +224,7 @@ const Index = () => {
           <div className="mb-6">
             <MeasurementForm 
               onSave={handleSave} 
-              editingIndex={editingIndex} 
+              editingData={editingIndex !== null ? measurements[editingIndex] : undefined} 
               setEditingIndex={setEditingIndex} 
             />
           </div>

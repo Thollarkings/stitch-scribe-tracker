@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import UserMenu from './UserMenu';
 
 interface NavbarProps {
   searchTerm: string;
@@ -49,6 +50,8 @@ const Navbar = ({ searchTerm, setSearchTerm, toggleForm, formVisible }: NavbarPr
                 <Plus className="h-4 w-4" />
                 <span className="block">{formVisible ? 'Hide Form' : 'New Client'}</span>
               </Button>
+              
+              <UserMenu />
             </div>
           </div>
         </div>
