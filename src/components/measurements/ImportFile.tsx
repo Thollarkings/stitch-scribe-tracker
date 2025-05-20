@@ -1,10 +1,17 @@
-
 import { useRef } from 'react';
 import { toast } from 'sonner';
 
 interface ImportFileProps {
   onImport: (data: any[]) => Promise<boolean>;
 }
+
+const numericFields = [
+  'serviceCharge', 'paidAmount', 'balance',
+  'head', 'neck', 'shoulderToShoulder', 'chest', 'waist',
+  'shoulderToNipple', 'shoulderToUnderbust', 'shoulderToWaist', 'nippleToNipple',
+  'sleeveLength', 'roundSleeve', 'hip', 'halfLength', 'topLength', 'gownLength',
+  'trouserWaist', 'crotch', 'trouserLength', 'thigh', 'waistToKnee', 'calf', 'ankle', 'insideLegSeam'
+];
 
 const ImportFile = ({ onImport }: ImportFileProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,9 +31,39 @@ const ImportFile = ({ onImport }: ImportFileProps) => {
       try {
         const result = e.target?.result;
         if (typeof result !== 'string') return;
-        
-        const importedData = JSON.parse(result);
+
+        let importedData = JSON.parse(result);
+
         if (Array.isArray(importedData)) {
+          // Normalize all numeric fields and comments
+          importedData = importedData.map((m) => {
+            const obj: any = { ...m };
+            // Normalize comments/notes
+            if (!obj.comments && obj.notes) obj.comments = obj.notes;
+
+            // Normalize numeric fields
+            numericFields.forEach(field => {
+              if (obj[field] !== undefined && obj[field] !== null && obj[field] !== '') {
+                obj[field] = Number(obj[field]);
+              }
+            });
+
+            // Ensure balance is present and correct
+            if (
+              (typeof obj.serviceCharge === 'number' || typeof obj.serviceCharge === 'string') &&
+              (typeof obj.paidAmount === 'number' || typeof obj.paidAmount === 'string')
+            ) {
+              obj.balance =
+                typeof obj.balance === 'number'
+                  ? obj.balance
+                  : Number(obj.serviceCharge) - Number(obj.paidAmount);
+            } else {
+              obj.balance = 0;
+            }
+
+            return obj;
+          });
+
           await onImport(importedData);
         } else {
           toast.error('Invalid JSON file. Please ensure it contains an array of measurements.');
@@ -37,7 +74,7 @@ const ImportFile = ({ onImport }: ImportFileProps) => {
       }
     };
     reader.readAsText(file);
-    
+
     // Reset the file input so the same file can be selected again
     if (event.target) {
       event.target.value = '';

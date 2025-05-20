@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -14,47 +13,50 @@ interface ExportDialogProps {
 const ExportDialog = ({ open, onOpenChange, measurements }: ExportDialogProps) => {
   const [exportFilename, setExportFilename] = useState('tailors_logbook_export');
 
-  const handleExportConfirm = () => {
-    downloadExportedData(exportFilename);
-  };
-
   const downloadExportedData = (customFilename?: string) => {
     try {
       const filename = (customFilename || 'tailors_logbook_export').replace(/[^a-zA-Z0-9-_]/g, '_');
-      
-      // Format the data for export to match the expected format
-      const exportData = measurements.map(m => ({
-        name: m.name,
-        phone: m.phone,
-        head: m.head,
-        neck: m.neck,
-        shoulderToShoulder: m.shoulderToShoulder,
-        chest: m.chest,
-        waist: m.waist,
-        shoulderToNipple: m.shoulderToNipple,
-        shoulderToUnderbust: m.shoulderToUnderbust,
-        shoulderToWaist: m.shoulderToWaist,
-        nippleToNipple: m.nippleToNipple,
-        sleeveLength: m.sleeve_length,
-        roundSleeve: m.roundSleeve,
-        hip: m.hip,
-        halfLength: m.halfLength,
-        topLength: m.topLength,
-        gownLength: m.gownLength,
-        trouserWaist: m.trouserWaist,
-        crotch: m.crotch,
-        trouserLength: m.trouserLength,
-        thigh: m.thigh,
-        waistToKnee: m.waistToKnee,
-        calf: m.calf,
-        ankle: m.ankle,
-        insideLegSeam: m.insideLegSeam,
-        comments: m.notes,
-        timestamp: m.timestamp,
-        collectionDate: m.collectionDate,
-        collectionDateType: m.collectionDateType
-      }));
-      
+      const exportData = measurements.map(m => {
+        const serviceCharge = typeof m.serviceCharge === 'number' ? m.serviceCharge : parseFloat(m.serviceCharge || '0');
+        const paidAmount = typeof m.paidAmount === 'number' ? m.paidAmount : parseFloat(m.paidAmount || '0');
+        const balance = typeof m.balance === 'number' ? m.balance : (serviceCharge - paidAmount);
+        return {
+          name: m.name,
+          phone: m.phone,
+          comments: m.comments || m.notes,
+          collectionDateType: m.collectionDateType,
+          timestamp: m.timestamp,
+          collectionDate: m.collectionDate,
+          serviceCharge,
+          paidAmount,
+          serviceChargeCurrency: m.serviceChargeCurrency,
+          balance,
+          head: m.head,
+          neck: m.neck,
+          shoulderToShoulder: m.shoulderToShoulder,
+          chest: m.chest,
+          waist: m.waist,
+          shoulderToNipple: m.shoulderToNipple,
+          shoulderToUnderbust: m.shoulderToUnderbust,
+          shoulderToWaist: m.shoulderToWaist,
+          nippleToNipple: m.nippleToNipple,
+          sleeveLength: m.sleeveLength,
+          roundSleeve: m.roundSleeve,
+          hip: m.hip,
+          halfLength: m.halfLength,
+          topLength: m.topLength,
+          gownLength: m.gownLength,
+          trouserWaist: m.trouserWaist,
+          crotch: m.crotch,
+          trouserLength: m.trouserLength,
+          thigh: m.thigh,
+          waistToKnee: m.waistToKnee,
+          calf: m.calf,
+          ankle: m.ankle,
+          insideLegSeam: m.insideLegSeam,
+        };
+      });
+
       const jsonStr = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -67,19 +69,23 @@ const ExportDialog = ({ open, onOpenChange, measurements }: ExportDialogProps) =
       document.body.removeChild(downloadAnchor);
 
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      
+
       toast.success("Data exported successfully");
-      
+
       // Mobile-specific guidance toast
       if (/Mobi|Android/i.test(navigator.userAgent)) {
         toast.info("File saved to your device's Downloads folder. If you can't find it, check your Files app or Downloads folder.");
       }
-      
+
       onOpenChange(false);
     } catch (error) {
       console.error("Error exporting data:", error);
       toast.error("Failed to export data");
     }
+  };
+
+  const handleExportConfirm = () => {
+    downloadExportedData(exportFilename);
   };
 
   return (

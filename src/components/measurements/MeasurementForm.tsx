@@ -13,36 +13,112 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Update the interface to properly handle Date objects
 interface MeasurementData {
   name?: string;
   phone?: string;
   comments?: string;
   collectionDateType?: string;
   timestamp?: string;
-  collectionDate?: Date;
+  collectionDate?: Date | string;
+  serviceCharge?: number;
+  paidAmount?: number;
+  serviceChargeCurrency?: string;
+  balance?: number;
+  head?: number;
+  neck?: number;
+  shoulderToShoulder?: number;
+  chest?: number;
+  waist?: number;
+  shoulderToNipple?: number;
+  shoulderToUnderbust?: number;
+  shoulderToWaist?: number;
+  nippleToNipple?: number;
+  sleeveLength?: number;
+  roundSleeve?: number;
+  hip?: number;
+  halfLength?: number;
+  topLength?: number;
+  gownLength?: number;
+  trouserWaist?: number;
+  crotch?: number;
+  trouserLength?: number;
+  thigh?: number;
+  waistToKnee?: number;
+  calf?: number;
+  ankle?: number;
+  insideLegSeam?: number;
   [key: string]: string | number | Date | undefined;
 }
 
 interface MeasurementFormProps {
   onSave: (data: MeasurementData) => void;
-  editingData?: MeasurementData; // Changed from editingIndex to editingData
+  editingData?: MeasurementData;
   setEditingIndex: (index: number | null) => void;
 }
+
+// List of all numeric field names
+const numericFields = [
+  'serviceCharge', 'paidAmount', 'balance',
+  'head', 'neck', 'shoulderToShoulder', 'chest', 'waist',
+  'shoulderToNipple', 'shoulderToUnderbust', 'shoulderToWaist', 'nippleToNipple',
+  'sleeveLength', 'roundSleeve', 'hip', 'halfLength', 'topLength', 'gownLength',
+  'trouserWaist', 'crotch', 'trouserLength', 'thigh', 'waistToKnee', 'calf', 'ankle', 'insideLegSeam'
+];
+
+const upperBodyFields = [
+  { name: 'head', label: 'Head' },
+  { name: 'neck', label: 'Neck' },
+  { name: 'shoulderToShoulder', label: 'Shoulder to Shoulder' },
+  { name: 'chest', label: 'Chest' },
+  { name: 'waist', label: 'Waist' },
+  { name: 'shoulderToNipple', label: 'Shoulder to Nipple' },
+  { name: 'shoulderToUnderbust', label: 'Shoulder to Underbust' },
+  { name: 'shoulderToWaist', label: 'Shoulder to Waist' },
+  { name: 'nippleToNipple', label: 'Nipple to Nipple' },
+];
+
+const sleevesFields = [
+  { name: 'sleeveLength', label: 'Sleeve Length' },
+  { name: 'roundSleeve', label: 'Round Sleeve' },
+];
+
+const lowerBodyFields = [
+  { name: 'hip', label: 'Hip' },
+  { name: 'halfLength', label: 'Half Length' },
+  { name: 'topLength', label: 'Top Length' },
+  { name: 'gownLength', label: 'Gown Length' },
+];
+
+const trouserFields = [
+  { name: 'trouserWaist', label: 'Trouser Waist' },
+  { name: 'crotch', label: 'Crotch' },
+  { name: 'trouserLength', label: 'Trouser Length' },
+  { name: 'thigh', label: 'Thigh' },
+  { name: 'waistToKnee', label: 'Waist to Knee' },
+  { name: 'calf', label: 'Calf' },
+  { name: 'ankle', label: 'Ankle' },
+  { name: 'insideLegSeam', label: 'Inside Leg Seam' },
+];
 
 const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFormProps) => {
   const [formData, setFormData] = useState<MeasurementData>({});
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [balance, setBalance] = useState<number>(0);
 
+  // Normalize imported or loaded data
   useEffect(() => {
     if (editingData) {
-      // Set form data from editingData
-      setFormData(editingData);
-      
-      // Convert collectionDate string back to Date object if it exists
+      const normalized: MeasurementData = { ...editingData };
+      numericFields.forEach(field => {
+        if (normalized[field] !== undefined && normalized[field] !== null && normalized[field] !== '') {
+          normalized[field] = Number(normalized[field]);
+        }
+      });
+      setFormData(normalized);
+
+      // Handle collectionDate as Date object
       if (editingData.collectionDate) {
-        const dateObj = new Date(editingData.collectionDate);
-        setDate(dateObj);
+        setDate(new Date(editingData.collectionDate));
       }
     } else {
       setFormData({});
@@ -50,21 +126,37 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
     }
   }, [editingData]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // Recalculate balance whenever serviceCharge or paidAmount changes
+  useEffect(() => {
+    const serviceCharge = typeof formData.serviceCharge === 'number'
+      ? formData.serviceCharge
+      : parseFloat(formData.serviceCharge as string) || 0;
+    const paidAmount = typeof formData.paidAmount === 'number'
+      ? formData.paidAmount
+      : parseFloat(formData.paidAmount as string) || 0;
+    setBalance(serviceCharge - paidAmount);
+  }, [formData.serviceCharge, formData.paidAmount]);
+
+  // Handle input changes and keep numeric fields as numbers
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: numericFields.includes(name)
+        ? (value === '' ? '' : Number(value))
+        : value,
+    }));
   };
 
   const handleCollectionTypeChange = (value: string) => {
-    setFormData({ ...formData, collectionDateType: value });
+    setFormData((prev) => ({ ...prev, collectionDateType: value }));
   };
 
   const handleCollectionDateChange = (date: Date | undefined) => {
     setDate(date);
     if (date) {
-      // Add the date directly to formData
-      setFormData({ ...formData, collectionDate: date });
+      setFormData((prev) => ({ ...prev, collectionDate: date }));
     } else {
-      // Create a new object without the collectionDate property
       const { collectionDate, ...rest } = formData;
       setFormData(rest);
     }
@@ -72,15 +164,16 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Create a serializable version of the data for storage
-    const dataToSave = { 
-      ...formData,
-      timestamp: new Date().toISOString(),
-      // Use the date state instead of trying to add it here
-      // The collectionDate is already in formData if it was set
-    };
-    
+    // Ensure numeric fields are numbers before saving
+    const dataToSave: MeasurementData = { ...formData };
+    numericFields.forEach(field => {
+      if (dataToSave[field] !== undefined && dataToSave[field] !== null && dataToSave[field] !== '') {
+        dataToSave[field] = Number(dataToSave[field]);
+      }
+    });
+    // Save the calculated balance as well
+    dataToSave.balance = balance;
+    dataToSave.timestamp = new Date().toISOString();
     onSave(dataToSave);
     setFormData({});
     setDate(undefined);
@@ -91,42 +184,6 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
     setDate(undefined);
     setEditingIndex(null);
   };
-
-  // Group measurements into categories for better organization
-  const upperBodyFields = [
-    { name: 'head', label: 'Head' },
-    { name: 'neck', label: 'Neck' },
-    { name: 'shoulderToShoulder', label: 'Shoulder to Shoulder' },
-    { name: 'chest', label: 'Chest' },
-    { name: 'waist', label: 'Waist' },
-    { name: 'shoulderToNipple', label: 'Shoulder to Nipple' },
-    { name: 'shoulderToUnderbust', label: 'Shoulder to Underbust' },
-    { name: 'shoulderToWaist', label: 'Shoulder to Waist' },
-    { name: 'nippleToNipple', label: 'Nipple to Nipple' },
-  ];
-
-  const sleevesFields = [
-    { name: 'sleeveLength', label: 'Sleeve Length' },
-    { name: 'roundSleeve', label: 'Round Sleeve' },
-  ];
-
-  const lowerBodyFields = [
-    { name: 'hip', label: 'Hip' },
-    { name: 'halfLength', label: 'Half Length' },
-    { name: 'topLength', label: 'Top Length' },
-    { name: 'gownLength', label: 'Gown Length' },
-  ];
-
-  const trouserFields = [
-    { name: 'trouserWaist', label: 'Trouser Waist' },
-    { name: 'crotch', label: 'Crotch' },
-    { name: 'trouserLength', label: 'Trouser Length' },
-    { name: 'thigh', label: 'Thigh' },
-    { name: 'waistToKnee', label: 'Waist to Knee' },
-    { name: 'calf', label: 'Calf' },
-    { name: 'ankle', label: 'Ankle' },
-    { name: 'insideLegSeam', label: 'Inside Leg Seam' },
-  ];
 
   const renderMeasurementInputs = (fields: { name: string; label: string }[]) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
@@ -139,8 +196,7 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
             type="number"
             placeholder={`Enter ${field.label.toLowerCase()}`}
             value={
-              // Ensure we only pass string or number to Input value
-              typeof formData[field.name] === 'number' || typeof formData[field.name] === 'string' 
+              typeof formData[field.name] === 'number' || typeof formData[field.name] === 'string'
                 ? formData[field.name] as string | number
                 : ''
             }
@@ -190,14 +246,15 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
             </div>
           </div>
 
-          {/* Collection Date Section */}
+          {/* Collection Date & Payment Section */}
           <div className="bg-muted/30 p-4 rounded-lg my-6">
-            <Label className="text-base font-medium mb-2 block">Collection Date</Label>
+            <Label className="text-base font-medium mb-2 block">Collection & Payment</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Date Type and Date Picker */}
               <div className="space-y-3">
                 <Label>Date Type</Label>
-                <RadioGroup 
-                  value={formData.collectionDateType as string || 'estimated'} 
+                <RadioGroup
+                  value={formData.collectionDateType as string || 'estimated'}
                   onValueChange={handleCollectionTypeChange}
                   className="flex flex-col space-y-1"
                 >
@@ -213,7 +270,9 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
               </div>
               <div className="space-y-3">
                 <Label>
-                  {formData.collectionDateType === 'exact' ? 'Exact Collection Date' : 'Estimated Collection Date'}
+                  {formData.collectionDateType === 'exact'
+                    ? 'Exact Collection Date'
+                    : 'Estimated Collection Date'}
                 </Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -240,6 +299,93 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
                   </PopoverContent>
                 </Popover>
               </div>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Payment section */}
+                <div className="grid grid-cols-2 gap-12 bg-indigo-100 border rounded-md w-full">
+                  {/* Currency Selector */}
+                  <div>
+                    <Label>Currency</Label>
+                    <select
+                      name="serviceChargeCurrency"
+                      value={formData.serviceChargeCurrency || 'NGN'}
+                      onChange={handleChange}
+                      className="w-full p-2 border rounded-md mt-1 bg-background"
+                    >
+                      <option value="NGN">₦ NGN</option>
+                      <option value="USD">$ USD</option>
+                      <option value="GBP">£ GBP</option>
+                      <option value="EUR">€ EUR</option>
+                      <option value="CAD">$ CAD</option>
+                    </select>
+                  </div>
+
+                  {/* Service Charge */}
+                  <div>
+                    <Label htmlFor="serviceCharge">Service Charge</Label>
+                    <div className="flex mt-2">
+                      <div className="flex items-center px-2 border rounded-l-md bg-muted/50">
+                        {formData.serviceChargeCurrency === 'USD' && '$'}
+                        {formData.serviceChargeCurrency === 'GBP' && '£'}
+                        {formData.serviceChargeCurrency === 'EUR' && '€'}
+                        {formData.serviceChargeCurrency === 'CAD' && '$'}
+                        {(!formData.serviceChargeCurrency || formData.serviceChargeCurrency === 'NGN') && '₦'}
+                      </div>
+                      <Input
+                        id="serviceCharge"
+                        name="serviceCharge"
+                        type="number"
+                        placeholder="0.00"
+                        value={formData.serviceCharge ?? ''}
+                        onChange={handleChange}
+                        className="w-64 rounded-l-none px-2"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Paid Amount */}
+                  <div>
+                    <Label htmlFor="paidAmount">Paid Amount</Label>
+                    <div className="flex mt-1">
+                      <div className="flex items-center px-3 border rounded-l-md bg-muted/50">
+                        {formData.serviceChargeCurrency === 'USD' && '$'}
+                        {formData.serviceChargeCurrency === 'GBP' && '£'}
+                        {formData.serviceChargeCurrency === 'EUR' && '€'}
+                        {formData.serviceChargeCurrency === 'CAD' && '$'}
+                        {(!formData.serviceChargeCurrency || formData.serviceChargeCurrency === 'NGN') && '₦'}
+                      </div>
+                      <Input
+                        id="paidAmount"
+                        name="paidAmount"
+                        type="number"
+                        placeholder="0.00"
+                        value={formData.paidAmount ?? ''}
+                        onChange={handleChange}
+                        className="w-15 rounded-l-none px-1"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Balance */}
+                  <div>
+                    <Label>Balance</Label>
+                    <div className="flex items-center h-10 px-3 mt-1 border rounded-md bg-muted/50 w-64 rounded-l-none px-2">
+                      <span className="font-medium">
+                        {formData.serviceChargeCurrency === 'USD' && '$'}
+                        {formData.serviceChargeCurrency === 'GBP' && '£'}
+                        {formData.serviceChargeCurrency === 'EUR' && '€'}
+                        {formData.serviceChargeCurrency === 'CAD' && '$'}
+                        {(!formData.serviceChargeCurrency || formData.serviceChargeCurrency === 'NGN') && '₦'}
+                        {' '}
+                        {balance.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -256,15 +402,12 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
             <TabsContent value="upper-body">
               {renderMeasurementInputs(upperBodyFields)}
             </TabsContent>
-
             <TabsContent value="sleeves">
               {renderMeasurementInputs(sleevesFields)}
             </TabsContent>
-
             <TabsContent value="lower-body">
               {renderMeasurementInputs(lowerBodyFields)}
             </TabsContent>
-
             <TabsContent value="trousers">
               {renderMeasurementInputs(trouserFields)}
             </TabsContent>
@@ -284,13 +427,8 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
             />
           </div>
         </CardContent>
-
         <CardFooter className="flex justify-between gap-4 pt-2 pb-6">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={handleCancel}
-          >
+          <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
           <Button
