@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -45,20 +46,27 @@ const Index = () => {
 
   const handleSave = async (measurementData: any) => {
     try {
-      // Add user_id to the measurement data
-      const measurementWithUser = {
+      // Format the collectionDate properly for database storage
+      const dataToSave = {
         ...measurementData,
         user_id: user?.id,
+        // Ensure we're sending the date in the correct format
+        collectionDate: measurementData.collectionDate instanceof Date 
+          ? measurementData.collectionDate.toISOString() 
+          : measurementData.collectionDate,
       };
 
       if (editingIndex !== null) {
         // Update existing measurement
         const { error } = await supabase
           .from('measurements')
-          .update(measurementWithUser)
-          .eq('id', measurementWithUser.id);
+          .update(dataToSave)
+          .eq('id', dataToSave.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
         
         toast.success("Client measurements updated successfully");
         setEditingIndex(null);
@@ -66,9 +74,12 @@ const Index = () => {
         // Insert new measurement
         const { error } = await supabase
           .from('measurements')
-          .insert(measurementWithUser);
+          .insert(dataToSave);
         
-        if (error) throw error;
+        if (error) {
+          console.error("Insert error:", error);
+          throw error;
+        }
         
         toast.success(`${measurementData.name}'s measurements saved`);
       }
@@ -76,9 +87,9 @@ const Index = () => {
       // Refresh measurements
       fetchMeasurements();
       setFormVisible(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving measurements:", error);
-      toast.error("Failed to save measurements");
+      toast.error(`Failed to save measurements: ${error.message || "Unknown error"}`);
     }
   };
 
@@ -116,7 +127,41 @@ const Index = () => {
   const downloadExportedData = (customFilename?: string) => {
     try {
       const filename = (customFilename || 'tailors_logbook_export').replace(/[^a-zA-Z0-9-_]/g, '_');
-      const jsonStr = JSON.stringify(measurements, null, 2);
+      
+      // Format the data for export to match the expected format
+      const exportData = measurements.map(m => ({
+        name: m.name,
+        phone: m.phone,
+        head: m.head,
+        neck: m.neck,
+        shoulderToShoulder: m.shoulderToShoulder,
+        chest: m.chest,
+        waist: m.waist,
+        shoulderToNipple: m.shoulderToNipple,
+        shoulderToUnderbust: m.shoulderToUnderbust,
+        shoulderToWaist: m.shoulderToWaist,
+        nippleToNipple: m.nippleToNipple,
+        sleeveLength: m.sleeve_length,
+        roundSleeve: m.roundSleeve,
+        hip: m.hip,
+        halfLength: m.halfLength,
+        topLength: m.topLength,
+        gownLength: m.gownLength,
+        trouserWaist: m.trouserWaist,
+        crotch: m.crotch,
+        trouserLength: m.trouserLength,
+        thigh: m.thigh,
+        waistToKnee: m.waistToKnee,
+        calf: m.calf,
+        ankle: m.ankle,
+        insideLegSeam: m.insideLegSeam,
+        comments: m.notes,
+        timestamp: m.timestamp,
+        collectionDate: m.collectionDate,
+        collectionDateType: m.collectionDateType
+      }));
+      
+      const jsonStr = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
 
@@ -165,29 +210,63 @@ const Index = () => {
         
         const importedData = JSON.parse(result);
         if (Array.isArray(importedData)) {
-          // Add user_id to each imported record
-          const dataWithUserId = importedData.map(item => ({
-            ...item,
-            user_id: user?.id,
-            // Remove any existing id to let the database generate new ones
-            id: undefined
-          }));
+          // Map the imported data to match our database schema
+          const dataWithUserId = importedData.map(item => {
+            // Map fields from imported JSON to database columns
+            return {
+              user_id: user?.id,
+              name: item.name,
+              phone: item.phone,
+              head: item.head,
+              neck: item.neck,
+              shoulderToShoulder: item.shoulderToShoulder,
+              chest: item.chest,
+              waist: item.waist,
+              shoulderToNipple: item.shoulderToNipple,
+              shoulderToUnderbust: item.shoulderToUnderbust,
+              shoulderToWaist: item.shoulderToWaist,
+              nippleToNipple: item.nippleToNipple,
+              sleeve_length: item.sleeveLength,
+              roundSleeve: item.roundSleeve,
+              hip: item.hip,
+              halfLength: item.halfLength,
+              topLength: item.topLength,
+              gownLength: item.gownLength,
+              trouserWaist: item.trouserWaist,
+              crotch: item.crotch,
+              trouserLength: item.trouserLength,
+              thigh: item.thigh,
+              waistToKnee: item.waistToKnee,
+              calf: item.calf,
+              ankle: item.ankle,
+              insideLegSeam: item.insideLegSeam,
+              notes: item.comments,
+              timestamp: item.timestamp || new Date().toISOString(),
+              collectionDate: item.collectionDate,
+              collectionDateType: item.collectionDateType || 'estimated',
+              // Remove any existing id to let the database generate new ones
+              id: undefined
+            };
+          });
           
           // Insert imported data into Supabase
           const { error } = await supabase
             .from('measurements')
             .insert(dataWithUserId);
           
-          if (error) throw error;
+          if (error) {
+            console.error("Import error:", error);
+            throw error;
+          }
           
           toast.success(`Imported ${importedData.length} records`);
           fetchMeasurements();
         } else {
           toast.error('Invalid JSON file. Please ensure it contains an array of measurements.');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error importing data:", error);
-        toast.error('Failed to import data. Please check the file format.');
+        toast.error(`Failed to import data: ${error.message || "Please check the file format."}`);
       }
     };
     reader.readAsText(file);

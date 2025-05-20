@@ -11,61 +11,121 @@ export type Database = {
     Tables: {
       measurements: {
         Row: {
+          ankle: number | null
+          calf: number | null
           chest: number | null
+          collectiondate: string | null
+          collectiondatetype: string | null
+          crotch: number | null
           delivery_date: string | null
           email: string | null
           gender: string | null
+          gownlength: number | null
+          halflength: number | null
+          head: number | null
           hips: number | null
           id: string
           inseam: number | null
+          insidelegseam: number | null
           name: string
+          neck: number | null
+          nippletonipple: number | null
           notes: string | null
           outseam: number | null
           phone: string | null
+          roundsleeve: number | null
           shoulders: number | null
+          shouldertonipple: number | null
+          shouldertoshoulder: number | null
+          shouldertounderbust: number | null
+          shouldertowaist: number | null
           sleeve_length: number | null
           status: string | null
+          thigh: number | null
           timestamp: string | null
+          toplength: number | null
+          trouserwaist: number | null
           user_id: string
           waist: number | null
+          waisttoknee: number | null
         }
         Insert: {
+          ankle?: number | null
+          calf?: number | null
           chest?: number | null
+          collectiondate?: string | null
+          collectiondatetype?: string | null
+          crotch?: number | null
           delivery_date?: string | null
           email?: string | null
           gender?: string | null
+          gownlength?: number | null
+          halflength?: number | null
+          head?: number | null
           hips?: number | null
           id?: string
           inseam?: number | null
+          insidelegseam?: number | null
           name: string
+          neck?: number | null
+          nippletonipple?: number | null
           notes?: string | null
           outseam?: number | null
           phone?: string | null
+          roundsleeve?: number | null
           shoulders?: number | null
+          shouldertonipple?: number | null
+          shouldertoshoulder?: number | null
+          shouldertounderbust?: number | null
+          shouldertowaist?: number | null
           sleeve_length?: number | null
           status?: string | null
+          thigh?: number | null
           timestamp?: string | null
+          toplength?: number | null
+          trouserwaist?: number | null
           user_id: string
           waist?: number | null
+          waisttoknee?: number | null
         }
         Update: {
+          ankle?: number | null
+          calf?: number | null
           chest?: number | null
+          collectiondate?: string | null
+          collectiondatetype?: string | null
+          crotch?: number | null
           delivery_date?: string | null
           email?: string | null
           gender?: string | null
+          gownlength?: number | null
+          halflength?: number | null
+          head?: number | null
           hips?: number | null
           id?: string
           inseam?: number | null
+          insidelegseam?: number | null
           name?: string
+          neck?: number | null
+          nippletonipple?: number | null
           notes?: string | null
           outseam?: number | null
           phone?: string | null
+          roundsleeve?: number | null
           shoulders?: number | null
+          shouldertonipple?: number | null
+          shouldertoshoulder?: number | null
+          shouldertounderbust?: number | null
+          shouldertowaist?: number | null
           sleeve_length?: number | null
           status?: string | null
+          thigh?: number | null
           timestamp?: string | null
+          toplength?: number | null
+          trouserwaist?: number | null
           user_id?: string
           waist?: number | null
+          waisttoknee?: number | null
         }
         Relationships: []
       }
