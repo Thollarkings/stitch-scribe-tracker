@@ -48,6 +48,20 @@ const colorSchemes = [
     accent: 'border-gray-500',
     secondary: 'bg-gray-50',
   },
+  {
+    name: 'Golden',
+    headerBg: 'bg-[linear-gradient(to_right,#713f12,#a16207,#a16207,#ca8a04,#854d0e,#ca8a04,#a16207)]',
+    headerText: 'text-white',
+    accent: 'border-yellow-500',
+    secondary: 'bg-yellow-50',
+  },
+  {
+    name: 'Silver',
+    headerBg: 'bg-gradient-to-r from-gray-200 via-gray-400 to-gray-300',
+    headerText: 'text-gray-800',
+    accent: 'border-gray-400',
+    secondary: 'bg-gray-100',
+  },
 ];
 
 const Invoice = () => {
