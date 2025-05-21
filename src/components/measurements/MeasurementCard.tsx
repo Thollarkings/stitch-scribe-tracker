@@ -198,7 +198,7 @@ const MeasurementCard = ({
               </Badge>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-8">
             <CardActions
               measurementId={measurement.id}
               index={index}
@@ -207,7 +207,11 @@ const MeasurementCard = ({
               onNewJobClick={() => setNewJobDialogOpen(true)}
               onServiceInvoiceClick={handleOpenInvoiceDialog}
             />
-            <Button variant="outline" size="sm" onClick={() => setJobListOpen(true)}>
+            <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setJobListOpen(true)}
+            className="bg-white/80 hover:bg-white w-full/2 mb-3">
               View Jobs
             </Button>
           </div>

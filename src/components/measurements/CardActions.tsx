@@ -34,38 +34,45 @@ const CardActions: React.FC<CardActionsProps> = ({
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <Button
-        size="sm"
-        variant="outline"
-        className="bg-white/80 hover:bg-white"
-        onClick={onNewJobClick}
-      >
-        <Plus className="h-4 w-4 mr-1" /> New Job
-      </Button>
+    <div className="grid grid-cols-1 gap- max-w-3xl mx-auto sm:grid-cols-4 sm:gap-4">
+  <Button
+    size="sm"
+    variant="outline"
+    className="bg-white/80 hover:bg-white w-full mb-2"
+    onClick={onNewJobClick}
+  >
+    <Plus className="h-4 w-4 mr-1" /> New Job
+  </Button>
 
-      <Button
-        size="sm"
-        variant="outline"
-        className="bg-white/80 hover:bg-white"
-        onClick={onServiceInvoiceClick}
-      >
-        <FileText className="h-4 w-4 mr-1" /> Service Invoice
-      </Button>
+  <Button
+    size="sm"
+    variant="outline"
+    className="bg-white/80 hover:bg-white w-full mb-3"
+    onClick={onServiceInvoiceClick}
+  >
+    <FileText className="h-4 w-4 mr-1" /> Service Invoice
+  </Button>
 
-      <Button size="sm" variant="ghost" onClick={() => handleEdit(index)}>
-        <Edit className="h-4 w-4 mr-1" /> Edit
-      </Button>
+  <Button
+    size="sm"
+    variant="ghost"
+    className="bg-white/80 hover:bg-white w-full mb-3"
+    onClick={() => handleEdit(index)}
+  >
+    <Edit className="h-4 w-4 mr-1" /> Edit
+  </Button>
 
-      <Button
-        size="sm"
-        variant={confirmingDelete ? 'destructive' : 'ghost'}
-        onClick={handleDeleteClick}
-      >
-        <Trash2 className="h-4 w-4 mr-1" />
-        {confirmingDelete ? 'Confirm' : 'Delete'}
-      </Button>
-    </div>
+  <Button
+    size="sm"
+    variant={confirmingDelete ? 'destructive' : 'ghost'}
+    className="bg-white/80 hover:bg-white w-full mb-3"
+    onClick={handleDeleteClick}
+  >
+    <Trash2 className="h-4 w-4 mr-1" />
+    {confirmingDelete ? 'Confirm' : 'Delete'}
+  </Button>
+</div>
+
   );
 };
 
