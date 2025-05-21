@@ -1,6 +1,15 @@
-
 import { useState } from 'react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Trash2, Edit } from 'lucide-react';
 import MeasurementCard from './MeasurementCard';
@@ -26,13 +35,23 @@ const MeasurementsList = ({
 
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-2xl font-bold mb-4">Client Records</h1>
+      {/* Header with title and client count */}
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Client Records</h1>
+        <div className="text-sm font-semibold bg-blue-100 text-blue-800 rounded-full px-3 py-1 select-none">
+          {measurements.length} {measurements.length === 1 ? 'Client' : 'Clients'}
+        </div>
+      </div>
       
+      {/* Loading state */}
       {isLoading ? (
         <div className="flex justify-center items-center p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
-      ) : measurements.length === 0 ? (
+      ) : 
+      
+      // No measurements found
+      measurements.length === 0 ? (
         <div className="text-center p-8 bg-gray-50 rounded-lg">
           {searchTerm ? (
             <p className="text-muted-foreground">No measurements found matching "{searchTerm}"</p>
@@ -44,6 +63,7 @@ const MeasurementsList = ({
           )}
         </div>
       ) : (
+        // Render list of MeasurementCards
         <>
           {measurements.map((measurement, index) => (
             <MeasurementCard
