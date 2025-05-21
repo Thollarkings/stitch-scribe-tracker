@@ -246,70 +246,77 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
             </div>
           </div>
 
-          {/* Collection Date & Payment Section */}
+          {/* Collection Date & Payment Section - IMPROVED LAYOUT */}
           <div className="bg-muted/30 p-4 rounded-lg my-6">
-            <Label className="text-base font-medium mb-2 block">Collection & Payment</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Date Type and Date Picker */}
               <div className="space-y-3">
-                <Label>Date Type</Label>
-                <RadioGroup
-                  value={formData.collectionDateType as string || 'estimated'}
-                  onValueChange={handleCollectionTypeChange}
-                  className="flex flex-col space-y-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="estimated" id="estimated" />
-                    <Label htmlFor="estimated">Estimated</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="exact" id="exact" />
-                    <Label htmlFor="exact">Exact</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div className="space-y-3">
-                <Label>
-                  {formData.collectionDateType === 'exact'
-                    ? 'Exact Collection Date'
-                    : 'Estimated Collection Date'}
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="collectionDate"
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, 'PPP') : <span>Select date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={handleCollectionDateChange}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Payment section */}
-                <div className="grid grid-cols-2 gap-12 bg-indigo-100 border rounded-md w-full">
-                  {/* Currency Selector */}
+                <Label className="text-base font-medium block">Collection Date</Label>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Currency</Label>
+                    <Label>Date Type</Label>
+                    <RadioGroup
+                      value={formData.collectionDateType as string || 'estimated'}
+                      onValueChange={handleCollectionTypeChange}
+                      className="flex flex-col space-y-1 mt-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="estimated" id="estimated" />
+                        <Label htmlFor="estimated">Estimated</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="exact" id="exact" />
+                        <Label htmlFor="exact">Exact</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  <div>
+                    <Label className="mb-2 block">
+                      {formData.collectionDateType === 'exact'
+                        ? 'Exact Collection Date'
+                        : 'Estimated Collection Date'}
+                    </Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="collectionDate"
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {date ? format(date, 'PPP') : <span>Select date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={handleCollectionDateChange}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment section with improved layout */}
+              <div className="space-y-4">
+                <Label className="text-base font-medium block">Payment Information</Label>
+                <div className="grid grid-cols-1 gap-4 mt-2">
+                  {/* Currency Selector */}
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="serviceChargeCurrency">Currency</Label>
                     <select
+                      id="serviceChargeCurrency"
                       name="serviceChargeCurrency"
                       value={formData.serviceChargeCurrency || 'NGN'}
                       onChange={handleChange}
-                      className="w-full p-2 border rounded-md mt-1 bg-background"
+                      className="w-full p-2 border rounded-md h-10 bg-background"
                     >
                       <option value="NGN">₦ NGN</option>
                       <option value="USD">$ USD</option>
@@ -319,11 +326,62 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
                     </select>
                   </div>
 
-                  {/* Service Charge */}
-                  <div>
-                    <Label htmlFor="serviceCharge">Service Charge</Label>
-                    <div className="flex mt-2">
-                      <div className="flex items-center px-2 border rounded-l-md bg-muted/50">
+                  {/* Service Charge and Paid Amount */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="serviceCharge">Service Charge</Label>
+                      <div className="flex">
+                        <div className="flex items-center px-3 border rounded-l-md bg-muted/50 h-10">
+                          {formData.serviceChargeCurrency === 'USD' && '$'}
+                          {formData.serviceChargeCurrency === 'GBP' && '£'}
+                          {formData.serviceChargeCurrency === 'EUR' && '€'}
+                          {formData.serviceChargeCurrency === 'CAD' && '$'}
+                          {(!formData.serviceChargeCurrency || formData.serviceChargeCurrency === 'NGN') && '₦'}
+                        </div>
+                        <Input
+                          id="serviceCharge"
+                          name="serviceCharge"
+                          type="number"
+                          placeholder="0.00"
+                          value={formData.serviceCharge ?? ''}
+                          onChange={handleChange}
+                          className="rounded-l-none"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="paidAmount">Paid Amount</Label>
+                      <div className="flex">
+                        <div className="flex items-center px-3 border rounded-l-md bg-muted/50 h-10">
+                          {formData.serviceChargeCurrency === 'USD' && '$'}
+                          {formData.serviceChargeCurrency === 'GBP' && '£'}
+                          {formData.serviceChargeCurrency === 'EUR' && '€'}
+                          {formData.serviceChargeCurrency === 'CAD' && '$'}
+                          {(!formData.serviceChargeCurrency || formData.serviceChargeCurrency === 'NGN') && '₦'}
+                        </div>
+                        <Input
+                          id="paidAmount"
+                          name="paidAmount"
+                          type="number"
+                          placeholder="0.00"
+                          value={formData.paidAmount ?? ''}
+                          onChange={handleChange}
+                          className="rounded-l-none"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Balance - readonly */}
+                  <div className="space-y-2">
+                    <Label htmlFor="balance">Balance</Label>
+                    <div className="flex">
+                      <div className="flex items-center px-3 border rounded-l-md bg-muted/50 h-10">
                         {formData.serviceChargeCurrency === 'USD' && '$'}
                         {formData.serviceChargeCurrency === 'GBP' && '£'}
                         {formData.serviceChargeCurrency === 'EUR' && '€'}
@@ -331,57 +389,11 @@ const MeasurementForm = ({ onSave, editingData, setEditingIndex }: MeasurementFo
                         {(!formData.serviceChargeCurrency || formData.serviceChargeCurrency === 'NGN') && '₦'}
                       </div>
                       <Input
-                        id="serviceCharge"
-                        name="serviceCharge"
-                        type="number"
-                        placeholder="0.00"
-                        value={formData.serviceCharge ?? ''}
-                        onChange={handleChange}
-                        className="w-64 rounded-l-none px-2"
-                        min="0"
-                        step="0.01"
+                        id="balance"
+                        readOnly
+                        value={balance.toFixed(2)}
+                        className="rounded-l-none bg-muted/30"
                       />
-                    </div>
-                  </div>
-
-                  {/* Paid Amount */}
-                  <div>
-                    <Label htmlFor="paidAmount">Paid Amount</Label>
-                    <div className="flex mt-1">
-                      <div className="flex items-center px-3 border rounded-l-md bg-muted/50">
-                        {formData.serviceChargeCurrency === 'USD' && '$'}
-                        {formData.serviceChargeCurrency === 'GBP' && '£'}
-                        {formData.serviceChargeCurrency === 'EUR' && '€'}
-                        {formData.serviceChargeCurrency === 'CAD' && '$'}
-                        {(!formData.serviceChargeCurrency || formData.serviceChargeCurrency === 'NGN') && '₦'}
-                      </div>
-                      <Input
-                        id="paidAmount"
-                        name="paidAmount"
-                        type="number"
-                        placeholder="0.00"
-                        value={formData.paidAmount ?? ''}
-                        onChange={handleChange}
-                        className="w-15 rounded-l-none px-1"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Balance */}
-                  <div>
-                    <Label>Balance</Label>
-                    <div className="flex items-center h-10 px-3 mt-1 border rounded-md bg-muted/50 w-64 rounded-l-none px-2">
-                      <span className="font-medium">
-                        {formData.serviceChargeCurrency === 'USD' && '$'}
-                        {formData.serviceChargeCurrency === 'GBP' && '£'}
-                        {formData.serviceChargeCurrency === 'EUR' && '€'}
-                        {formData.serviceChargeCurrency === 'CAD' && '$'}
-                        {(!formData.serviceChargeCurrency || formData.serviceChargeCurrency === 'NGN') && '₦'}
-                        {' '}
-                        {balance.toFixed(2)}
-                      </span>
                     </div>
                   </div>
                 </div>

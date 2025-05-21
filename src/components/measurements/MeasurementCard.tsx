@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -9,13 +10,22 @@ import {
   CollapsibleTrigger
 } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-import { Edit, Trash2, ChevronDown } from 'lucide-react';
+import { Edit, Trash2, ChevronDown, Plus, FileText } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface MeasurementCardProps {
   measurement: Record<string, any>;
   index: number;
   onDelete: (index: number) => void;
   handleEdit: (index: number) => void;
+  onAddJob?: (clientId: string, jobData: any) => void;
 }
 
 const getCurrencySymbol = (currency?: string) => {
@@ -37,10 +47,19 @@ const MeasurementCard = ({
   measurement,
   index,
   onDelete,
-  handleEdit
+  handleEdit,
+  onAddJob
 }: MeasurementCardProps) => {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [newJobDialogOpen, setNewJobDialogOpen] = useState(false);
+  const [collectionDate, setCollectionDate] = useState<Date | undefined>(undefined);
+  const [newJobData, setNewJobData] = useState({
+    serviceCharge: '',
+    collectionDateType: 'estimated',
+    serviceChargeCurrency: measurement.serviceChargeCurrency || 'NGN'
+  });
+  const navigate = useNavigate();
 
   // Define measurement fields with labels and keys
   const measurementFields = [
@@ -104,7 +123,7 @@ const MeasurementCard = ({
   const timeAgo = formatDistanceToNow(timestamp, { addSuffix: true });
 
   // Format collection date if available
-  const collectionDate = measurement.collectionDate
+  const origCollectionDate = measurement.collectionDate
     ? new Date(measurement.collectionDate).toLocaleString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -138,6 +157,31 @@ const MeasurementCard = ({
     }
   };
 
+  const handleNewJobSubmit = () => {
+    if (onAddJob && measurement.id) {
+      const jobData = {
+        ...newJobData,
+        clientId: measurement.id,
+        clientName: measurement.name,
+        timestamp: new Date().toISOString(),
+        collectionDate: collectionDate ? collectionDate.toISOString() : null
+      };
+      
+      onAddJob(measurement.id, jobData);
+      setNewJobDialogOpen(false);
+      setCollectionDate(undefined);
+      setNewJobData({
+        serviceCharge: '',
+        collectionDateType: 'estimated',
+        serviceChargeCurrency: measurement.serviceChargeCurrency || 'NGN'
+      });
+    }
+  };
+
+  const handleInvoiceClick = () => {
+    navigate(`/stitch-scribe-tracker/invoice/${measurement.id}`);
+  };
+
   useEffect(() => {
     return () => setConfirmingDelete(false);
   }, [index]);
@@ -156,6 +200,22 @@ const MeasurementCard = ({
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="bg-white/80 hover:bg-white"
+              onClick={() => setNewJobDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-1" /> New Job
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="bg-white/80 hover:bg-white"
+              onClick={handleInvoiceClick}
+            >
+              <FileText className="h-4 w-4 mr-1" /> Service Invoice
+            </Button>
             <Button size="sm" variant="ghost" onClick={() => handleEdit(index)}>
               <Edit className="h-4 w-4 mr-1" /> Edit
             </Button>
@@ -258,15 +318,128 @@ const MeasurementCard = ({
 
       <CardFooter className="text-xs text-muted-foreground pt-0 pb-2 flex flex-wrap gap-2">
         <span>Recorded: {formattedDate}</span>
-        {collectionDate && (
+        {origCollectionDate && (
           <>
             <span className="text-muted-foreground">•</span>
             <span>
-              ({collectionDateType === 'exact' ? 'Exact' : 'Estimated'}) Collection Date: {collectionDate}
+              ({collectionDateType === 'exact' ? 'Exact' : 'Estimated'}) Collection Date: {origCollectionDate}
             </span>
           </>
         )}
       </CardFooter>
+
+      {/* New Job Dialog */}
+      <Dialog open={newJobDialogOpen} onOpenChange={setNewJobDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Job for {measurement.name}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="collection-date-type" className="col-span-4">
+                Collection Date Type
+              </Label>
+              <div className="flex items-center space-x-2 col-span-4">
+                <input
+                  type="radio"
+                  id="estimated"
+                  value="estimated"
+                  checked={newJobData.collectionDateType === 'estimated'}
+                  onChange={() => setNewJobData({...newJobData, collectionDateType: 'estimated'})}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="estimated">Estimated</Label>
+              </div>
+              <div className="flex items-center space-x-2 col-span-4">
+                <input
+                  type="radio"
+                  id="exact"
+                  value="exact"
+                  checked={newJobData.collectionDateType === 'exact'}
+                  onChange={() => setNewJobData({...newJobData, collectionDateType: 'exact'})}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="exact">Exact</Label>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="collection-date" className="col-span-4">
+                {newJobData.collectionDateType === 'exact' ? 'Exact' : 'Estimated'} Collection Date
+              </Label>
+              <div className="col-span-4">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !collectionDate && "text-muted-foreground"
+                      )}
+                    >
+                      {collectionDate ? format(collectionDate, 'PPP') : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={collectionDate}
+                      onSelect={setCollectionDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="service-charge-currency" className="col-span-4">
+                Currency
+              </Label>
+              <select
+                id="service-charge-currency"
+                className="col-span-4 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2"
+                value={newJobData.serviceChargeCurrency}
+                onChange={(e) => setNewJobData({...newJobData, serviceChargeCurrency: e.target.value})}
+              >
+                <option value="NGN">₦ NGN</option>
+                <option value="USD">$ USD</option>
+                <option value="GBP">£ GBP</option>
+                <option value="EUR">€ EUR</option>
+                <option value="CAD">$ CAD</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="service-charge" className="col-span-4">
+                Service Charge
+              </Label>
+              <div className="flex col-span-4">
+                <div className="flex items-center px-3 border rounded-l-md bg-muted/50 h-10">
+                  {getCurrencySymbol(newJobData.serviceChargeCurrency)}
+                </div>
+                <Input
+                  id="service-charge"
+                  type="number"
+                  placeholder="0.00"
+                  value={newJobData.serviceCharge}
+                  onChange={(e) => setNewJobData({...newJobData, serviceCharge: e.target.value})}
+                  className="rounded-l-none"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setNewJobDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleNewJobSubmit}>Save Job</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

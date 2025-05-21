@@ -10,6 +10,7 @@ import ExportDialog from '@/components/measurements/ExportDialog';
 import ImportFile from '@/components/measurements/ImportFile';
 import { useMeasurements } from '@/hooks/useMeasurements';
 import { useRef } from 'react';
+import { toast } from 'sonner';
 
 const Index = () => {
   const { 
@@ -68,6 +69,12 @@ const Index = () => {
     }
   };
 
+  const handleAddJob = (clientId: string, jobData: any) => {
+    // For now, just show a toast as we don't have a separate jobs table
+    toast.success(`Added new job for ${jobData.clientName}`);
+    // In a real implementation, we would save this to a jobs table in the database
+  };
+
   const filteredMeasurements = measurements.filter(measurement =>
     measurement.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -105,6 +112,7 @@ const Index = () => {
               handleEdit={handleEdit}
               searchTerm={searchTerm}
               isLoading={isLoading}
+              onAddJob={handleAddJob}
             />
           </CardContent>
         </Card>

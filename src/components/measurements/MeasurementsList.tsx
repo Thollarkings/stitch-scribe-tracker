@@ -4,12 +4,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Trash2, Edit } from 'lucide-react';
 import MeasurementCard from './MeasurementCard';
+
 interface MeasurementsListProps {
   measurements: any[];
   onDelete: (index: number) => void;
   handleEdit: (index: number) => void;
   searchTerm: string;
   isLoading?: boolean;
+  onAddJob?: (clientId: string, jobData: any) => void;
 }
 
 const MeasurementsList = ({ 
@@ -17,7 +19,8 @@ const MeasurementsList = ({
   onDelete, 
   handleEdit, 
   searchTerm, 
-  isLoading = false 
+  isLoading = false,
+  onAddJob
 }: MeasurementsListProps) => {
   console.log(measurements); // in MeasurementsList before rendering MeasurementCard
 
@@ -49,6 +52,7 @@ const MeasurementsList = ({
               index={index}
               onDelete={onDelete}
               handleEdit={handleEdit}
+              onAddJob={onAddJob}
             />
           ))}
         </>
