@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useMeasurements } from '@/hooks/useMeasurements';
 import html2canvas from 'html2canvas';
-import { PDFDocument, rgb } from 'pdf-lib';
 
 const colorSchemes = [
   {
@@ -47,6 +46,20 @@ const colorSchemes = [
     headerText: 'text-white',
     accent: 'border-gray-500',
     secondary: 'bg-gray-50',
+  },
+  {
+    name: 'Golden',
+    headerBg: 'bg-[linear-gradient(to_right,#713f12,#a16207,#a16207,#ca8a04,#854d0e,#ca8a04,#a16207)]',
+    headerText: 'text-white',
+    accent: 'border-yellow-500',
+    secondary: 'bg-yellow-50',
+  },
+  {
+    name: 'Silver',
+    headerBg: 'bg-gradient-to-r from-gray-200 via-gray-400 to-gray-300',
+    headerText: 'text-gray-800',
+    accent: 'border-gray-400',
+    secondary: 'bg-gray-100',
   },
 ];
 
@@ -105,7 +118,7 @@ const Invoice = () => {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 1048576) {
+      if (file.size > 1048576) { // 1MB in bytes
         toast.error("Logo file size must be less than 1MB");
         return;
       }
@@ -128,61 +141,30 @@ const Invoice = () => {
     localStorage.setItem('invoiceColorScheme', index.toString());
   };
 
-  const generatePDF = async () => {
+  const generatePNG = async () => {
     if (!invoiceRef.current) return;
-    toast.info("Generating high-quality PDF...");
-
+    toast.info("Preparing invoice image...");
     try {
-      // Step 1: Capture HTML as canvas with high resolution
       const canvas = await html2canvas(invoiceRef.current, {
-        scale: 2,
+        scale: 3,
         logging: false,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff' // Ensure white background
       });
-
-      // Step 2: Create PDF document
-      const pdfDoc = await PDFDocument.create();
       
-      // Convert canvas dimensions to PDF points (1px = 0.75 points)
-      const pdfPage = pdfDoc.addPage([
-        canvas.width * 0.75,
-        canvas.height * 0.75
-      ]);
-
-      // Step 3: Convert canvas to PNG image
-      const pngImage = await pdfDoc.embedPng(canvas.toDataURL('image/png'));
-      
-      // Step 4: Draw image on PDF
-      pdfPage.drawImage(pngImage, {
-        x: 0,
-        y: 0,
-        width: canvas.width * 0.75,
-        height: canvas.height * 0.75,
-      });
-
-      // Step 5: Add metadata
-      pdfDoc.setTitle(`Invoice for ${measurement?.name}`);
-      pdfDoc.setAuthor(invoiceData.companyName || 'Your Company');
-      pdfDoc.setCreator('StitchScribe Invoice Generator');
-      pdfDoc.setKeywords(['invoice', 'tailoring', measurement?.name]);
-      pdfDoc.setProducer('pdf-lib + html2canvas');
-
-      // Step 6: Save the PDF
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      // Create a temporary link to download the PNG
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `invoice_${measurement?.name.replace(/\s/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      link.download = `invoice_${measurement?.name.replace(/\s/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.png`;
+      link.href = canvas.toDataURL('image/png');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      toast.success("High-quality PDF generated!");
+      
+      toast.success("Invoice image downloaded successfully!");
     } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
+      console.error("Error generating PNG:", error);
+      toast.error("Failed to generate image. Please try again.");
     }
   };
 
@@ -190,7 +172,7 @@ const Invoice = () => {
   const today = new Date();
   const formattedDate = format(today, 'MMMM dd, yyyy');
 
-  // Job selection logic
+  // --- JOB SELECTION LOGIC ---
   const selectedJob = location.state?.job;
   let jobToInvoice: any = null;
   if (selectedJob) {
@@ -378,15 +360,14 @@ const Invoice = () => {
             <CardFooter>
               <Button 
                 className="w-full" 
-                onClick={generatePDF}
+                onClick={generatePNG}
                 disabled={!measurement}
               >
-                <Download className="h-4 w-4 mr-2" /> Download Invoice PDF
+                <Download className="h-4 w-4 mr-2" /> Download Invoice PNG
               </Button>
             </CardFooter>
           </Card>
         </div>
-        
         {/* Invoice Preview */}
         <div className="lg:col-span-2 border rounded-lg shadow-lg overflow-hidden bg-white">
           <div className="p-6">
@@ -416,7 +397,6 @@ const Invoice = () => {
                     )}
                   </div>
                 </div>
-                
                 {/* Invoice Body */}
                 <div className="p-6">
                   <div className="flex justify-between mb-8">
@@ -438,7 +418,6 @@ const Invoice = () => {
                       )}
                     </div>
                   </div>
-                  
                   <div className="mb-8">
                     <table className="min-w-full bg-white">
                       <thead className={`${currentColors.secondary}`}>
@@ -508,8 +487,8 @@ const Invoice = () => {
                       </tfoot>
                     </table>
                   </div>
-                  
-                  {/* Bank & Payment Details */}
+                 
+                  {/* Bank & Payment Details Below Invoice */}
                   <div className="mt-8 border-t pt-4 text-sm text-gray-700 bg-white">
                     <h4 className="font-semibold mb-2">Payment/Bank Details</h4>
                     <p>
