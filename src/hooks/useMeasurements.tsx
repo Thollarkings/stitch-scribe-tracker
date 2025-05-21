@@ -136,7 +136,9 @@ export const useMeasurements = () => {
           timestamp: item.timestamp || new Date().toISOString(),
           collectionDate: item.collectionDate,
           collectionDateType: item.collectionDateType || 'estimated',
-          jobs: item.jobs ? JSON.stringify(item.jobs) : null,
+          // Fix: Remove the jobs field from import or set it to null
+          // The jobs column in the database is numeric, but we're trying to store JSON
+          // jobs: item.jobs ? JSON.stringify(item.jobs) : null,
         };
       });
           
@@ -197,3 +199,4 @@ export const useMeasurements = () => {
     importMeasurements
   };
 };
+
