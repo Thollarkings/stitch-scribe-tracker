@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -83,9 +82,12 @@ const Index = () => {
       const measurement = measurements[measurementIndex];
       
       // Create updated measurement with the new job
+      // Ensure job data has numeric fields as numbers, not strings
       const updatedMeasurement = {
         ...measurement,
-        jobs: Array.isArray(measurement.jobs) ? [...measurement.jobs, jobData] : [jobData]
+        jobs: Array.isArray(measurement.jobs) 
+          ? [...measurement.jobs, jobData]
+          : [jobData]
       };
       
       // Save the updated measurement

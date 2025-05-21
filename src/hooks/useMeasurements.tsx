@@ -40,8 +40,9 @@ export const useMeasurements = () => {
         collectionDate: measurementData.collectionDate instanceof Date 
           ? measurementData.collectionDate.toISOString() 
           : measurementData.collectionDate,
-        // Ensure jobs array is handled properly
-        jobs: Array.isArray(measurementData.jobs) ? JSON.stringify(measurementData.jobs) : null
+        // Send jobs directly as an array object, not as a stringified JSON
+        // This ensures proper handling in the database JSON column
+        jobs: Array.isArray(measurementData.jobs) ? measurementData.jobs : null
       };
 
       if (isEditing) {
@@ -136,9 +137,9 @@ export const useMeasurements = () => {
           timestamp: item.timestamp || new Date().toISOString(),
           collectionDate: item.collectionDate,
           collectionDateType: item.collectionDateType || 'estimated',
-          // Fix: Remove the jobs field from import or set it to null
-          // The jobs column in the database is numeric, but we're trying to store JSON
-          // jobs: item.jobs ? JSON.stringify(item.jobs) : null,
+          // If jobs exist in the imported data, include them directly as an array
+          // This avoids type errors with the database column
+          ...(item.jobs && { jobs: item.jobs })
         };
       });
           
@@ -199,4 +200,3 @@ export const useMeasurements = () => {
     importMeasurements
   };
 };
-

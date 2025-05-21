@@ -32,7 +32,7 @@ export type Database = {
           id: string
           inseam: number | null
           insideLegSeam: number | null
-          job: string | null
+          job: Json | null
           jobs: number | null
           name: string
           neck: number | null
@@ -82,7 +82,7 @@ export type Database = {
           id?: string
           inseam?: number | null
           insideLegSeam?: number | null
-          job?: string | null
+          job?: Json | null
           jobs?: number | null
           name: string
           neck?: number | null
@@ -132,7 +132,7 @@ export type Database = {
           id?: string
           inseam?: number | null
           insideLegSeam?: number | null
-          job?: string | null
+          job?: Json | null
           jobs?: number | null
           name?: string
           neck?: number | null

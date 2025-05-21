@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -38,11 +37,16 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
 
   const handleSubmit = () => {
     // Calculate balance based on service charge and paid amount
-    const calculatedBalance = parseFloat(jobData.serviceCharge || '0') - parseFloat(jobData.paidAmount || '0');
+    const serviceCharge = parseFloat(jobData.serviceCharge || '0');
+    const paidAmount = parseFloat(jobData.paidAmount || '0');
+    const calculatedBalance = serviceCharge - paidAmount;
     
+    // Convert string values to numbers where appropriate
     const newJobData = {
       ...jobData,
-      balance: calculatedBalance.toString(),
+      serviceCharge: serviceCharge,
+      paidAmount: paidAmount,
+      balance: calculatedBalance,
       clientId,
       clientName,
       timestamp: new Date().toISOString(),
