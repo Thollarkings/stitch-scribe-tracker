@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' && componentTagger()
   ].filter(Boolean),
-  base: '/', // Critical for GitHub Pages
+  base: '/stitch-scribe-tracker/', // Critical for GitHub Pages
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
