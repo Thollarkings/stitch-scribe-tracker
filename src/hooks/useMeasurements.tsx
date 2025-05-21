@@ -140,14 +140,16 @@ export const useMeasurements = () => {
         };
       });
           
-      // Insert imported data into Supabase
-      const { error } = await supabase
-        .from('measurements')
-        .insert(dataWithUserId);
-      
-      if (error) {
-        console.error("Import error:", error);
-        throw error;
+      // Insert each imported measurement individually
+      for (const measurementData of dataWithUserId) {
+        const { error } = await supabase
+          .from('measurements')
+          .insert(measurementData);
+        
+        if (error) {
+          console.error("Import error:", error);
+          throw error;
+        }
       }
       
       toast.success(`Imported ${importedData.length} records`);
