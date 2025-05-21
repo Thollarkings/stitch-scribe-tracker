@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useMeasurements } from '@/hooks/useMeasurements';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 const colorSchemes = [
   {
@@ -64,8 +63,6 @@ const colorSchemes = [
   },
 ];
 
-
-
 const Invoice = () => {
   const { id } = useParams<{ id: string }>();
   const { measurements, isLoading } = useMeasurements();
@@ -78,7 +75,6 @@ const Invoice = () => {
     companyBankName: '',
     companyAccountName: '',
     companyEmail: '',
-
   });
   const [selectedColorScheme, setSelectedColorScheme] = useState(0);
   const [measurement, setMeasurement] = useState<any | null>(null);
@@ -145,30 +141,30 @@ const Invoice = () => {
     localStorage.setItem('invoiceColorScheme', index.toString());
   };
 
-  const generatePDF = async () => {
+  const generatePNG = async () => {
     if (!invoiceRef.current) return;
-    toast.info("Preparing PDF...");
+    toast.info("Preparing invoice image...");
     try {
       const canvas = await html2canvas(invoiceRef.current, {
-        scale: 2,
+        scale: 3,
         logging: false,
         useCORS: true,
-        allowTaint: true
+        allowTaint: true,
+        backgroundColor: '#ffffff' // Ensure white background
       });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save(`invoice_${measurement?.name.replace(/\s/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-      toast.success("Invoice PDF generated successfully!");
+      
+      // Create a temporary link to download the PNG
+      const link = document.createElement('a');
+      link.download = `invoice_${measurement?.name.replace(/\s/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success("Invoice image downloaded successfully!");
     } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
+      console.error("Error generating PNG:", error);
+      toast.error("Failed to generate image. Please try again.");
     }
   };
 
@@ -250,55 +246,52 @@ const Invoice = () => {
                 />
               </div>
               <div className="space-y-0">
-  <Label htmlFor="companyBankName">Bank Name</Label>
-  <Input
-    id="companyBankName"
-    name="companyBankName"
-    value={invoiceData.companyBankName}
-    onChange={handleInputChange}
-    placeholder="Your Bank Name"
-    type="text"
-  />
-</div>
-<div className="space-y-0">
-  <Label htmlFor="companyAccountName">Account Name</Label>
-  <Input
-    id="companyAccountName"
-    name="companyAccountName"
-    value={invoiceData.companyAccountName}
-    onChange={handleInputChange}
-    placeholder="Your Bank Account Name"
-    type="text"
-  />
-</div>
-
-<div className="space-y-0">
-  <Label htmlFor="companyEmail">Email</Label>
-  <Input
-    id="companyEmail"
-    name="companyEmail"
-    value={invoiceData.companyEmail}
-    onChange={handleInputChange}
-    placeholder="Your Email Address"
-    type="email"
-  />
-</div>
-
-
-<div className="space-y-0">
-  <Label htmlFor="companyAccountNumber">Bank Account Number</Label>
-  <Input
-    id="companyAccountNumber"
-    name="companyAccountNumber"
-    value={invoiceData.companyAccountNumber || ""}
-    onChange={handleInputChange}
-    placeholder="Your Bank Account Number"
-    type="text"
-    inputMode="numeric"
-    pattern="[0-9]*"
-    maxLength={20}
-  />
-</div>
+                <Label htmlFor="companyBankName">Bank Name</Label>
+                <Input
+                  id="companyBankName"
+                  name="companyBankName"
+                  value={invoiceData.companyBankName}
+                  onChange={handleInputChange}
+                  placeholder="Your Bank Name"
+                  type="text"
+                />
+              </div>
+              <div className="space-y-0">
+                <Label htmlFor="companyAccountName">Account Name</Label>
+                <Input
+                  id="companyAccountName"
+                  name="companyAccountName"
+                  value={invoiceData.companyAccountName}
+                  onChange={handleInputChange}
+                  placeholder="Your Bank Account Name"
+                  type="text"
+                />
+              </div>
+              <div className="space-y-0">
+                <Label htmlFor="companyEmail">Email</Label>
+                <Input
+                  id="companyEmail"
+                  name="companyEmail"
+                  value={invoiceData.companyEmail}
+                  onChange={handleInputChange}
+                  placeholder="Your Email Address"
+                  type="email"
+                />
+              </div>
+              <div className="space-y-0">
+                <Label htmlFor="companyAccountNumber">Bank Account Number</Label>
+                <Input
+                  id="companyAccountNumber"
+                  name="companyAccountNumber"
+                  value={invoiceData.companyAccountNumber || ""}
+                  onChange={handleInputChange}
+                  placeholder="Your Bank Account Number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={20}
+                />
+              </div>
               <div className="space-y-0">
                 <Label htmlFor="companyAddress">Address</Label>
                 <Textarea
@@ -367,10 +360,10 @@ const Invoice = () => {
             <CardFooter>
               <Button 
                 className="w-full" 
-                onClick={generatePDF}
+                onClick={generatePNG}
                 disabled={!measurement}
               >
-                <Download className="h-4 w-4 mr-2" /> Download Invoice PDF
+                <Download className="h-4 w-4 mr-2" /> Download Invoice PNG
               </Button>
             </CardFooter>
           </Card>
@@ -384,7 +377,7 @@ const Invoice = () => {
                 <p className="text-muted-foreground">No client/job data found</p>
               </div>
             ) : (
-              <div ref={invoiceRef} className="border rounded-lg overflow-hidden bg-white">
+              <div ref={invoiceRef} className="border rounded-lg overflow-visible bg-white">
                 {/* Invoice Header */}
                 <div className={`p-6 ${currentColors.headerBg} ${currentColors.headerText}`}>
                   <div className="flex justify-between items-center">
@@ -494,32 +487,28 @@ const Invoice = () => {
                       </tfoot>
                     </table>
                   </div>
-                  {/* You can add more invoice details here */}
+                 
                   {/* Bank & Payment Details Below Invoice */}
-<div className="mt-8 border-t pt-4 text-sm text-gray-700">
-  <h4 className="font-semibold mb-2">Payment/Bank Details</h4>
-  {invoiceData.companyAccountName && (
-    <p>
-      <span className="font-medium">Account Name:</span> {invoiceData.companyAccountName}
-    </p>
-  )}
-  {invoiceData.companyAccountNumber && (
-    <p>
-      <span className="font-medium">Account Number:</span> {invoiceData.companyAccountNumber}
-    </p>
-  )}
-  {invoiceData.companyBankName && (
-    <p>
-      <span className="font-medium">Bank Name:</span> {invoiceData.companyBankName}
-    </p>
-  )}
-  {invoiceData.companyEmail && (
-    <p>
-      <span className="font-medium">Email:</span> {invoiceData.companyEmail}
-    </p>
-  )}
-</div>
-
+                  <div className="mt-8 border-t pt-4 text-sm text-gray-700 bg-white">
+                    <h4 className="font-semibold mb-2">Payment/Bank Details</h4>
+                    <p>
+                      <span className="font-medium">Account Name:</span>{" "}
+                      {invoiceData.companyAccountName || <span className="text-gray-400">N/A</span>}
+                    </p>
+                    <p>
+                      <span className="font-medium">Account Number:</span>{" "}
+                      {invoiceData.companyAccountNumber || <span className="text-gray-400">N/A</span>}
+                    </p>
+                    <p>
+                      <span className="font-medium">Bank Name:</span>{" "}
+                      {invoiceData.companyBankName || <span className="text-gray-400">N/A</span>}
+                    </p>
+                    {invoiceData.companyEmail && (
+                      <p>
+                        <span className="font-medium">Email:</span> {invoiceData.companyEmail}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
