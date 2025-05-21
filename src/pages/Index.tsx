@@ -28,6 +28,12 @@ const Index = () => {
   const importRef = useRef<HTMLDivElement>(null);
 
   const handleSave = async (measurementData: any) => {
+    // Preserve the original timestamp when editing
+    if (editingIndex !== null && measurements[editingIndex]) {
+      const originalTimestamp = measurements[editingIndex].timestamp;
+      measurementData.timestamp = originalTimestamp;
+    }
+    
     const success = await saveMeasurement(
       measurementData,
       editingIndex !== null

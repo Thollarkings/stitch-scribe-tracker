@@ -56,6 +56,8 @@ const MeasurementCard = ({
   const [collectionDate, setCollectionDate] = useState<Date | undefined>(undefined);
   const [newJobData, setNewJobData] = useState({
     serviceCharge: '',
+    paidAmount: '', // Added paidAmount field
+    balance: '', // Added balance field (could be calculated)
     collectionDateType: 'estimated',
     serviceChargeCurrency: measurement.serviceChargeCurrency || 'NGN'
   });
@@ -159,8 +161,12 @@ const MeasurementCard = ({
 
   const handleNewJobSubmit = () => {
     if (onAddJob && measurement.id) {
+      // Calculate balance based on service charge and paid amount
+      const calculatedBalance = parseFloat(newJobData.serviceCharge || '0') - parseFloat(newJobData.paidAmount || '0');
+      
       const jobData = {
         ...newJobData,
+        balance: calculatedBalance.toString(),
         clientId: measurement.id,
         clientName: measurement.name,
         timestamp: new Date().toISOString(),
@@ -172,19 +178,31 @@ const MeasurementCard = ({
       setCollectionDate(undefined);
       setNewJobData({
         serviceCharge: '',
+        paidAmount: '',
+        balance: '',
         collectionDateType: 'estimated',
         serviceChargeCurrency: measurement.serviceChargeCurrency || 'NGN'
       });
     }
   };
 
+  // Fix the navigation path - remove the duplicate /stitch-scribe-tracker prefix
   const handleInvoiceClick = () => {
-    navigate(`/stitch-scribe-tracker/invoice/${measurement.id}`);
+    navigate(`/invoice/${measurement.id}`);
   };
 
   useEffect(() => {
     return () => setConfirmingDelete(false);
   }, [index]);
+
+  // Auto-calculate balance whenever service charge or paid amount changes
+  useEffect(() => {
+    if (newJobData.serviceCharge || newJobData.paidAmount) {
+      const calculatedBalance = 
+        (parseFloat(newJobData.serviceCharge || '0') - parseFloat(newJobData.paidAmount || '0')).toFixed(2);
+      setNewJobData(prev => ({...prev, balance: calculatedBalance }));
+    }
+  }, [newJobData.serviceCharge, newJobData.paidAmount]);
 
   return (
     <Card className="mb-10 border-l-4 border-l-tailor-gold overflow-hidden animate-fade-in shadow-2xl">
@@ -328,7 +346,7 @@ const MeasurementCard = ({
         )}
       </CardFooter>
 
-      {/* New Job Dialog */}
+      {/* New Job Dialog with added fields for Paid Amount and Balance */}
       <Dialog open={newJobDialogOpen} onOpenChange={setNewJobDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -428,6 +446,47 @@ const MeasurementCard = ({
                   className="rounded-l-none"
                   min="0"
                   step="0.01"
+                />
+              </div>
+            </div>
+            
+            {/* Added Paid Amount Field */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="paid-amount" className="col-span-4">
+                Paid Amount
+              </Label>
+              <div className="flex col-span-4">
+                <div className="flex items-center px-3 border rounded-l-md bg-muted/50 h-10">
+                  {getCurrencySymbol(newJobData.serviceChargeCurrency)}
+                </div>
+                <Input
+                  id="paid-amount"
+                  type="number"
+                  placeholder="0.00"
+                  value={newJobData.paidAmount}
+                  onChange={(e) => setNewJobData({...newJobData, paidAmount: e.target.value})}
+                  className="rounded-l-none"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+            
+            {/* Added Balance Field (read-only, automatically calculated) */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="balance" className="col-span-4">
+                Balance (Calculated)
+              </Label>
+              <div className="flex col-span-4">
+                <div className="flex items-center px-3 border rounded-l-md bg-muted/50 h-10">
+                  {getCurrencySymbol(newJobData.serviceChargeCurrency)}
+                </div>
+                <Input
+                  id="balance"
+                  type="text"
+                  value={newJobData.balance}
+                  className="rounded-l-none bg-gray-50"
+                  readOnly
                 />
               </div>
             </div>
