@@ -1,20 +1,50 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // <-- Add this
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import PaymentSummary from './PaymentSummary';
 import MeasurementDetails from './MeasurementDetails';
 import CardActions from './CardActions';
-import JobsList from './JobsList';
 import NewJobDialog from './NewJobDialog';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from '@/components/ui/dialog';
+
+interface Job {
+  recordedDateTime: string;
+  collectionDate: string | null;
+  serviceCharge: number;
+  paidAmount: number;
+  balance: number;
+  serviceChargeCurrency: string;
+  label?: string;
+}
 
 interface MeasurementCardProps {
-  measurement: Record<string, any>;
+  measurement: {
+    id: string;
+    name: string;
+    phone: string;
+    timestamp?: string;
+    collectionDate?: string;
+    collectionDateType?: string;
+    serviceCharge?: number | string;
+    paidAmount?: number | string;
+    serviceChargeCurrency?: string;
+    jobs?: Job[];
+    [key: string]: any;
+  };
   index: number;
   onDelete: (index: number) => void;
   handleEdit: (index: number) => void;
-  onAddJob?: (clientId: string, jobData: any) => void;
+  onAddJob: (clientId: string, jobData: Job) => Promise<void>;
 }
 
 const MeasurementCard = ({
@@ -24,31 +54,58 @@ const MeasurementCard = ({
   handleEdit,
   onAddJob
 }: MeasurementCardProps) => {
+  const { toast } = useToast();
+  const navigate = useNavigate(); // <-- Add this
   const [isOpen, setIsOpen] = useState(false);
   const [jobListOpen, setJobListOpen] = useState(false);
   const [newJobDialogOpen, setNewJobDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Invoice dialog state
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [selectedJobIndex, setSelectedJobIndex] = useState<number | null>(null);
 
   // Helper function to get all jobs (initial + additional)
-  const getAllJobs = () => {
-    const initialJob = {
-      recordedDateTime: measurement.timestamp,
-      collectionDate: measurement.collectionDate,
-      serviceCharge: measurement.serviceCharge || '0',
-      paidAmount: measurement.paidAmount || '0',
-      balance: parseFloat(measurement.serviceCharge || '0') - parseFloat(measurement.paidAmount || '0'),
+  const getAllJobs = (): Job[] => {
+    const initialJob: Job = {
+      recordedDateTime: measurement.timestamp || new Date().toISOString(),
+      collectionDate: measurement.collectionDate || null,
+      serviceCharge:
+        typeof measurement.serviceCharge === 'number'
+          ? measurement.serviceCharge
+          : parseFloat(measurement.serviceCharge || '0'),
+      paidAmount:
+        typeof measurement.paidAmount === 'number'
+          ? measurement.paidAmount
+          : parseFloat(measurement.paidAmount || '0'),
+      balance: calculateBalance(
+        typeof measurement.serviceCharge === 'number'
+          ? measurement.serviceCharge
+          : parseFloat(measurement.serviceCharge || '0'),
+        typeof measurement.paidAmount === 'number'
+          ? measurement.paidAmount
+          : parseFloat(measurement.paidAmount || '0')
+      ),
       serviceChargeCurrency: measurement.serviceChargeCurrency || 'NGN',
       label: 'Initial Job'
     };
-    
-    // measurement.jobs is an array of job objects added via "New Job"
-    const jobs = Array.isArray(measurement.jobs) ? measurement.jobs : [];
-    return [initialJob, ...jobs];
+
+    const additionalJobs = Array.isArray(measurement.jobs) ? measurement.jobs : [];
+    return [initialJob, ...additionalJobs];
+  };
+
+  // Calculate total paid amount across all jobs
+  const getTotalPaidAmount = (): number => {
+    return getAllJobs().reduce((total, job) => total + (job.paidAmount || 0), 0);
+  };
+
+  const calculateBalance = (serviceCharge: number, paidAmount: number): number => {
+    return serviceCharge - paidAmount;
   };
 
   // Format timestamp
-  const timestamp = measurement.timestamp
-    ? new Date(measurement.timestamp)
-    : new Date();
+  const timestamp = measurement.timestamp ? new Date(measurement.timestamp) : new Date();
+
   const formattedDate = timestamp.toLocaleString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -68,7 +125,6 @@ const MeasurementCard = ({
       })
     : null;
 
-  // Get collection date type (estimated or exact)
   const collectionDateType = measurement.collectionDateType || 'estimated';
 
   // Payment fields and balance calculation
@@ -76,17 +132,57 @@ const MeasurementCard = ({
     typeof measurement.serviceCharge === 'number'
       ? measurement.serviceCharge
       : parseFloat(measurement.serviceCharge || '0');
+
   const paidAmount =
     typeof measurement.paidAmount === 'number'
       ? measurement.paidAmount
       : parseFloat(measurement.paidAmount || '0');
-  const balance = serviceCharge - paidAmount;
 
-  const handleNewJob = (clientId: string, jobData: any) => {
-    if (onAddJob) {
-      onAddJob(clientId, jobData);
+  const balance = calculateBalance(serviceCharge, paidAmount);
+
+  // Handle adding a new job
+  const handleNewJob = async (clientId: string, jobData: Job) => {
+    setIsSubmitting(true);
+    try {
+      await onAddJob(clientId, jobData);
       setNewJobDialogOpen(false);
+      toast({
+        title: 'Success',
+        description: 'New job added successfully',
+        variant: 'default'
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add new job',
+        variant: 'destructive'
+      });
+      console.error('Error adding new job:', error);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  // Open invoice dialog
+  const handleOpenInvoiceDialog = () => {
+    setInvoiceDialogOpen(true);
+    setSelectedJobIndex(null);
+  };
+
+  // Generate invoice for selected job
+  const handleGenerateInvoice = () => {
+    if (selectedJobIndex === null) {
+      toast({
+        title: 'Please select a job',
+        variant: 'destructive'
+      });
+      return;
+    }
+    const job = getAllJobs()[selectedJobIndex];
+    setInvoiceDialogOpen(false);
+
+    // Navigate to invoice page, passing job details in state
+    navigate(`/invoice/${measurement.id}`, { state: { job } });
   };
 
   return (
@@ -103,37 +199,30 @@ const MeasurementCard = ({
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <CardActions 
+            <CardActions
               measurementId={measurement.id}
               index={index}
               handleEdit={handleEdit}
               onDelete={onDelete}
               onNewJobClick={() => setNewJobDialogOpen(true)}
+              onServiceInvoiceClick={handleOpenInvoiceDialog}
             />
-            <JobsList
-              jobs={getAllJobs()}
-              currency={measurement.serviceChargeCurrency || 'NGN'}
-              isOpen={jobListOpen}
-              onOpenChange={setJobListOpen}
-            />
+            <Button variant="outline" size="sm" onClick={() => setJobListOpen(true)}>
+              View Jobs
+            </Button>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="pt-4">
-        {/* Payment summary section */}
-        <PaymentSummary 
-          serviceCharge={serviceCharge} 
-          paidAmount={paidAmount} 
+        <PaymentSummary
+          serviceCharge={serviceCharge}
+          paidAmount={paidAmount}
           balance={balance}
           currency={measurement.serviceChargeCurrency || 'NGN'}
         />
 
-        <MeasurementDetails 
-          measurement={measurement}
-          isOpen={isOpen}
-          onOpenChange={setIsOpen}
-        />
+        <MeasurementDetails measurement={measurement} isOpen={isOpen} onOpenChange={setIsOpen} />
       </CardContent>
 
       <CardFooter className="text-xs text-muted-foreground pt-0 pb-2 flex flex-wrap gap-2">
@@ -155,7 +244,92 @@ const MeasurementCard = ({
         clientName={measurement.name}
         defaultCurrency={measurement.serviceChargeCurrency || 'NGN'}
         onSubmit={handleNewJob}
+        isSubmitting={isSubmitting}
       />
+
+      {/* Job List Modal */}
+      <Dialog open={jobListOpen} onOpenChange={setJobListOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Job List for {measurement.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {getAllJobs().map((job, idx) => (
+              <div key={idx} className="p-3 border rounded shadow-sm">
+                <p>
+                  <strong>{job.label || `Job ${idx + 1}`}</strong>
+                </p>
+                <p>Recorded Date: {new Date(job.recordedDateTime).toLocaleString()}</p>
+                <p>
+                  Collection Date:{' '}
+                  {job.collectionDate ? new Date(job.collectionDate).toLocaleDateString() : 'N/A'}
+                </p>
+                <p>
+                  Service Charge: {job.serviceChargeCurrency}
+                  {job.serviceCharge.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p>
+                  Paid Amount: {job.serviceChargeCurrency}
+                  {job.paidAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p>
+                  Balance: {job.serviceChargeCurrency}
+                  {job.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Total Paid Amount */}
+          <div className="p-3 mt-4 border-t font-semibold text-right">
+            Total Paid Amount: {measurement.serviceChargeCurrency || 'NGN'}{' '}
+            {getTotalPaidAmount().toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+
+          <DialogClose asChild>
+            <Button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              Close
+            </Button>
+          </DialogClose>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invoice Selection Dialog */}
+      <Dialog open={invoiceDialogOpen} onOpenChange={setInvoiceDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Job for Invoice</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <label htmlFor="job-select" className="block mb-2 font-medium">
+              Choose a job:
+            </label>
+            <select
+              id="job-select"
+              className="w-full border rounded p-2"
+              value={selectedJobIndex !== null ? selectedJobIndex : ''}
+              onChange={(e) => setSelectedJobIndex(Number(e.target.value))}
+            >
+              <option value="" disabled>
+                -- Select a job --
+              </option>
+              {getAllJobs().map((job, idx) => (
+                <option key={idx} value={idx}>
+                  {job.label || `Job ${idx + 1}`} - {new Date(job.recordedDateTime).toLocaleDateString()}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mt-6 flex justify-end space-x-3">
+            <Button variant="outline" onClick={() => setInvoiceDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleGenerateInvoice} disabled={selectedJobIndex === null}>
+              Generate Invoice
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

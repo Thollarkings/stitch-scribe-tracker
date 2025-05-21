@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,40 +15,56 @@ import jsPDF from 'jspdf';
 const colorSchemes = [
   {
     name: 'Professional Blue',
-    headerBg: 'bg-blue-700',
+    headerBg: 'bg-gradient-to-r from-blue-700 via-blue-400 to-blue-700',
     headerText: 'text-white',
     accent: 'border-blue-500',
-    secondary: 'bg-blue-50'
+    secondary: 'bg-blue-50',
   },
   {
     name: 'Modern Green',
-    headerBg: 'bg-emerald-700',
+    headerBg: 'bg-gradient-to-r from-emerald-700 via-emerald-400 to-emerald-700',
     headerText: 'text-white',
     accent: 'border-emerald-500',
-    secondary: 'bg-emerald-50'
+    secondary: 'bg-emerald-50',
   },
   {
     name: 'Elegant Purple',
-    headerBg: 'bg-purple-700',
+    headerBg: 'bg-gradient-to-r from-purple-700 via-purple-400 to-purple-700',
     headerText: 'text-white',
     accent: 'border-purple-500',
-    secondary: 'bg-purple-50'
+    secondary: 'bg-purple-50',
   },
   {
     name: 'Vibrant Orange',
-    headerBg: 'bg-orange-600',
+    headerBg: 'bg-gradient-to-r from-orange-900 via-orange-400 to-orange-700',
     headerText: 'text-white',
     accent: 'border-orange-500',
-    secondary: 'bg-orange-50'
+    secondary: 'bg-orange-50',
   },
   {
     name: 'Classic Gray',
-    headerBg: 'bg-gray-800',
+    headerBg: 'bg-gradient-to-r from-gray-800 via-gray-500 to-gray-900',
     headerText: 'text-white',
     accent: 'border-gray-500',
-    secondary: 'bg-gray-50'
-  }
+    secondary: 'bg-gray-50',
+  },
+  {
+    name: 'Golden',
+    headerBg: 'bg-[linear-gradient(to_right,#713f12,#a16207,#a16207,#ca8a04,#854d0e,#ca8a04,#a16207)]',
+    headerText: 'text-white',
+    accent: 'border-yellow-500',
+    secondary: 'bg-yellow-50',
+  },
+  {
+    name: 'Silver',
+    headerBg: 'bg-gradient-to-r from-gray-200 via-gray-400 to-gray-300',
+    headerText: 'text-gray-800',
+    accent: 'border-gray-400',
+    secondary: 'bg-gray-100',
+  },
 ];
+
+
 
 const Invoice = () => {
   const { id } = useParams<{ id: string }>();
@@ -59,21 +74,24 @@ const Invoice = () => {
     companyPhone: '',
     companyAddress: '',
     companyLogo: null as string | null,
+    companyAccountNumber: '',
+    companyBankName: '',
+    companyAccountName: '',
+    companyEmail: '',
+
   });
   const [selectedColorScheme, setSelectedColorScheme] = useState(0);
   const [measurement, setMeasurement] = useState<any | null>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Load the company data from localStorage if available
     const savedCompanyData = localStorage.getItem('invoiceCompanyData');
     if (savedCompanyData) {
       setInvoiceData(JSON.parse(savedCompanyData));
     }
-    
-    // Load color scheme preference if available
     const savedColorScheme = localStorage.getItem('invoiceColorScheme');
     if (savedColorScheme) {
       setSelectedColorScheme(parseInt(savedColorScheme, 10));
@@ -108,7 +126,6 @@ const Invoice = () => {
         toast.error("Logo file size must be less than 1MB");
         return;
       }
-
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -130,9 +147,7 @@ const Invoice = () => {
 
   const generatePDF = async () => {
     if (!invoiceRef.current) return;
-    
     toast.info("Preparing PDF...");
-    
     try {
       const canvas = await html2canvas(invoiceRef.current, {
         scale: 2,
@@ -140,21 +155,16 @@ const Invoice = () => {
         useCORS: true,
         allowTaint: true
       });
-      
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       });
-      
       const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       pdf.save(`invoice_${measurement?.name.replace(/\s/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-      
       toast.success("Invoice PDF generated successfully!");
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -165,7 +175,32 @@ const Invoice = () => {
   const currentColors = colorSchemes[selectedColorScheme];
   const today = new Date();
   const formattedDate = format(today, 'MMMM dd, yyyy');
-  
+
+  // --- JOB SELECTION LOGIC ---
+  const selectedJob = location.state?.job;
+  let jobToInvoice: any = null;
+  if (selectedJob) {
+    jobToInvoice = selectedJob;
+  } else if (measurement) {
+    jobToInvoice = {
+      serviceCharge: typeof measurement.serviceCharge === 'number'
+        ? measurement.serviceCharge
+        : parseFloat(measurement.serviceCharge || '0'),
+      paidAmount: typeof measurement.paidAmount === 'number'
+        ? measurement.paidAmount
+        : parseFloat(measurement.paidAmount || '0'),
+      balance: (typeof measurement.serviceCharge === 'number'
+        ? measurement.serviceCharge
+        : parseFloat(measurement.serviceCharge || '0')) -
+        (typeof measurement.paidAmount === 'number'
+        ? measurement.paidAmount
+        : parseFloat(measurement.paidAmount || '0')),
+      collectionDate: measurement.collectionDate,
+      serviceChargeCurrency: measurement.serviceChargeCurrency || 'NGN',
+      label: 'Initial Job'
+    };
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -193,9 +228,8 @@ const Invoice = () => {
                 <FileText className="h-5 w-5" /> Invoice Generator
               </CardTitle>
             </CardHeader>
-            
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
+            <CardContent className="space-y-2">
+              <div className="space-y-0">
                 <Label htmlFor="companyName">Company Name</Label>
                 <Input
                   id="companyName"
@@ -205,8 +239,7 @@ const Invoice = () => {
                   placeholder="Your Company Name"
                 />
               </div>
-              
-              <div className="space-y-2">
+              <div className="space-y-0">
                 <Label htmlFor="companyPhone">Phone Number</Label>
                 <Input
                   id="companyPhone"
@@ -216,8 +249,57 @@ const Invoice = () => {
                   placeholder="Your Phone Number"
                 />
               </div>
-              
-              <div className="space-y-2">
+              <div className="space-y-0">
+  <Label htmlFor="companyBankName">Bank Name</Label>
+  <Input
+    id="companyBankName"
+    name="companyBankName"
+    value={invoiceData.companyBankName}
+    onChange={handleInputChange}
+    placeholder="Your Bank Name"
+    type="text"
+  />
+</div>
+<div className="space-y-0">
+  <Label htmlFor="companyAccountName">Account Name</Label>
+  <Input
+    id="companyAccountName"
+    name="companyAccountName"
+    value={invoiceData.companyAccountName}
+    onChange={handleInputChange}
+    placeholder="Your Bank Account Name"
+    type="text"
+  />
+</div>
+
+<div className="space-y-0">
+  <Label htmlFor="companyEmail">Email</Label>
+  <Input
+    id="companyEmail"
+    name="companyEmail"
+    value={invoiceData.companyEmail}
+    onChange={handleInputChange}
+    placeholder="Your Email Address"
+    type="email"
+  />
+</div>
+
+
+<div className="space-y-0">
+  <Label htmlFor="companyAccountNumber">Bank Account Number</Label>
+  <Input
+    id="companyAccountNumber"
+    name="companyAccountNumber"
+    value={invoiceData.companyAccountNumber || ""}
+    onChange={handleInputChange}
+    placeholder="Your Bank Account Number"
+    type="text"
+    inputMode="numeric"
+    pattern="[0-9]*"
+    maxLength={20}
+  />
+</div>
+              <div className="space-y-0">
                 <Label htmlFor="companyAddress">Address</Label>
                 <Textarea
                   id="companyAddress"
@@ -225,11 +307,10 @@ const Invoice = () => {
                   value={invoiceData.companyAddress}
                   onChange={handleInputChange}
                   placeholder="Company Address"
-                  rows={3}
+                  rows={2}
                 />
               </div>
-              
-              <div className="space-y-2">
+              <div className="space-y-0">
                 <Label htmlFor="companyLogo">Company Logo (max 1MB)</Label>
                 <div className="flex items-center gap-2">
                   <Input
@@ -268,7 +349,6 @@ const Invoice = () => {
                   </div>
                 )}
               </div>
-              
               <div className="space-y-2">
                 <Label>Color Scheme</Label>
                 <div className="grid grid-cols-5 gap-2">
@@ -284,7 +364,6 @@ const Invoice = () => {
                 <p className="text-xs text-muted-foreground mt-1">Selected: {colorSchemes[selectedColorScheme].name}</p>
               </div>
             </CardContent>
-            
             <CardFooter>
               <Button 
                 className="w-full" 
@@ -296,15 +375,13 @@ const Invoice = () => {
             </CardFooter>
           </Card>
         </div>
-        
         {/* Invoice Preview */}
         <div className="lg:col-span-2 border rounded-lg shadow-lg overflow-hidden bg-white">
           <div className="p-6">
             <h2 className="text-lg font-semibold mb-4">Invoice Preview</h2>
-            
-            {!measurement ? (
+            {!measurement || !jobToInvoice ? (
               <div className="flex justify-center items-center h-[600px] border rounded-lg">
-                <p className="text-muted-foreground">No client data found</p>
+                <p className="text-muted-foreground">No client/job data found</p>
               </div>
             ) : (
               <div ref={invoiceRef} className="border rounded-lg overflow-hidden bg-white">
@@ -327,7 +404,6 @@ const Invoice = () => {
                     )}
                   </div>
                 </div>
-                
                 {/* Invoice Body */}
                 <div className="p-6">
                   <div className="flex justify-between mb-8">
@@ -341,15 +417,14 @@ const Invoice = () => {
                       <h3 className="font-semibold mb-2">Invoice Details:</h3>
                       <p><span className="font-medium">Date:</span> {formattedDate}</p>
                       <p><span className="font-medium">Invoice #:</span> INV-{Math.floor(Math.random() * 10000).toString().padStart(4, '0')}</p>
-                      {measurement.collectionDate && (
+                      {jobToInvoice.collectionDate && (
                         <p>
                           <span className="font-medium">Collection Date:</span> {" "}
-                          {format(new Date(measurement.collectionDate), 'MMMM dd, yyyy')}
+                          {format(new Date(jobToInvoice.collectionDate), 'MMMM dd, yyyy')}
                         </p>
                       )}
                     </div>
                   </div>
-                  
                   <div className="mb-8">
                     <table className="min-w-full bg-white">
                       <thead className={`${currentColors.secondary}`}>
@@ -363,19 +438,19 @@ const Invoice = () => {
                         <tr>
                           <td className="py-4 px-4 border-b">1</td>
                           <td className="py-4 px-4 border-b">
-                            Tailoring Services for {measurement.name}
+                            {jobToInvoice.label || 'Tailoring Services'} for {measurement.name}
                             {measurement.comments && (
                               <p className="text-sm text-gray-600 mt-1">{measurement.comments}</p>
                             )}
                           </td>
                           <td className="py-4 px-4 border-b text-right">
-                            {measurement.serviceChargeCurrency === 'USD' && '$'}
-                            {measurement.serviceChargeCurrency === 'GBP' && '£'}
-                            {measurement.serviceChargeCurrency === 'EUR' && '€'}
-                            {measurement.serviceChargeCurrency === 'CAD' && '$'}
-                            {(!measurement.serviceChargeCurrency || measurement.serviceChargeCurrency === 'NGN') && '₦'}
+                            {jobToInvoice.serviceChargeCurrency === 'USD' && '$'}
+                            {jobToInvoice.serviceChargeCurrency === 'GBP' && '£'}
+                            {jobToInvoice.serviceChargeCurrency === 'EUR' && '€'}
+                            {jobToInvoice.serviceChargeCurrency === 'CAD' && '$'}
+                            {(!jobToInvoice.serviceChargeCurrency || jobToInvoice.serviceChargeCurrency === 'NGN') && '₦'}
                             {' '}
-                            {parseFloat(measurement.serviceCharge || 0).toFixed(2)}
+                            {parseFloat(jobToInvoice.serviceCharge || 0).toFixed(2)}
                           </td>
                         </tr>
                       </tbody>
@@ -383,50 +458,68 @@ const Invoice = () => {
                         <tr className={`${currentColors.secondary} font-medium`}>
                           <td className="py-2 px-4 border-t" colSpan={2}>Total</td>
                           <td className="py-2 px-4 border-t text-right">
-                            {measurement.serviceChargeCurrency === 'USD' && '$'}
-                            {measurement.serviceChargeCurrency === 'GBP' && '£'}
-                            {measurement.serviceChargeCurrency === 'EUR' && '€'}
-                            {measurement.serviceChargeCurrency === 'CAD' && '$'}
-                            {(!measurement.serviceChargeCurrency || measurement.serviceChargeCurrency === 'NGN') && '₦'}
+                            {jobToInvoice.serviceChargeCurrency === 'USD' && '$'}
+                            {jobToInvoice.serviceChargeCurrency === 'GBP' && '£'}
+                            {jobToInvoice.serviceChargeCurrency === 'EUR' && '€'}
+                            {jobToInvoice.serviceChargeCurrency === 'CAD' && '$'}
+                            {(!jobToInvoice.serviceChargeCurrency || jobToInvoice.serviceChargeCurrency === 'NGN') && '₦'}
                             {' '}
-                            {parseFloat(measurement.serviceCharge || 0).toFixed(2)}
+                            {parseFloat(jobToInvoice.serviceCharge || 0).toFixed(2)}
                           </td>
                         </tr>
                         <tr>
                           <td className="py-2 px-4" colSpan={2}>Paid Amount</td>
                           <td className="py-2 px-4 text-right">
-                            {measurement.serviceChargeCurrency === 'USD' && '$'}
-                            {measurement.serviceChargeCurrency === 'GBP' && '£'}
-                            {measurement.serviceChargeCurrency === 'EUR' && '€'}
-                            {measurement.serviceChargeCurrency === 'CAD' && '$'}
-                            {(!measurement.serviceChargeCurrency || measurement.serviceChargeCurrency === 'NGN') && '₦'}
+                            {jobToInvoice.serviceChargeCurrency === 'USD' && '$'}
+                            {jobToInvoice.serviceChargeCurrency === 'GBP' && '£'}
+                            {jobToInvoice.serviceChargeCurrency === 'EUR' && '€'}
+                            {jobToInvoice.serviceChargeCurrency === 'CAD' && '$'}
+                            {(!jobToInvoice.serviceChargeCurrency || jobToInvoice.serviceChargeCurrency === 'NGN') && '₦'}
                             {' '}
-                            {parseFloat(measurement.paidAmount || 0).toFixed(2)}
+                            {parseFloat(jobToInvoice.paidAmount || 0).toFixed(2)}
                           </td>
                         </tr>
-                        <tr className="font-bold">
-                          <td className="py-2 px-4 border-t" colSpan={2}>Balance Due</td>
-                          <td className="py-2 px-4 border-t text-right">
-                            {measurement.serviceChargeCurrency === 'USD' && '$'}
-                            {measurement.serviceChargeCurrency === 'GBP' && '£'}
-                            {measurement.serviceChargeCurrency === 'EUR' && '€'}
-                            {measurement.serviceChargeCurrency === 'CAD' && '$'}
-                            {(!measurement.serviceChargeCurrency || measurement.serviceChargeCurrency === 'NGN') && '₦'}
+                        <tr>
+                          <td className="py-2 px-4 font-bold" colSpan={2}>Balance</td>
+                          <td className="py-2 px-4 text-right font-bold">
+                            {jobToInvoice.serviceChargeCurrency === 'USD' && '$'}
+                            {jobToInvoice.serviceChargeCurrency === 'GBP' && '£'}
+                            {jobToInvoice.serviceChargeCurrency === 'EUR' && '€'}
+                            {jobToInvoice.serviceChargeCurrency === 'CAD' && '$'}
+                            {(!jobToInvoice.serviceChargeCurrency || jobToInvoice.serviceChargeCurrency === 'NGN') && '₦'}
                             {' '}
-                            {(
-                              parseFloat(measurement.serviceCharge || 0) - 
-                              parseFloat(measurement.paidAmount || 0)
-                            ).toFixed(2)}
+                            {parseFloat(jobToInvoice.balance || 0).toFixed(2)}
                           </td>
                         </tr>
                       </tfoot>
                     </table>
                   </div>
-                  
-                  <div className={`p-4 ${currentColors.secondary} rounded-md ${currentColors.accent} border-l-4`}>
-                    <p className="font-medium">Thank you for your business!</p>
-                    <p className="text-sm mt-1">For any questions or concerns regarding this invoice, please contact us.</p>
-                  </div>
+                  {/* You can add more invoice details here */}
+                  {/* Bank & Payment Details Below Invoice */}
+<div className="mt-8 border-t pt-4 text-sm text-gray-700">
+  <h4 className="font-semibold mb-2">Payment/Bank Details</h4>
+  {invoiceData.companyAccountName && (
+    <p>
+      <span className="font-medium">Account Name:</span> {invoiceData.companyAccountName}
+    </p>
+  )}
+  {invoiceData.companyAccountNumber && (
+    <p>
+      <span className="font-medium">Account Number:</span> {invoiceData.companyAccountNumber}
+    </p>
+  )}
+  {invoiceData.companyBankName && (
+    <p>
+      <span className="font-medium">Bank Name:</span> {invoiceData.companyBankName}
+    </p>
+  )}
+  {invoiceData.companyEmail && (
+    <p>
+      <span className="font-medium">Email:</span> {invoiceData.companyEmail}
+    </p>
+  )}
+</div>
+
                 </div>
               </div>
             )}

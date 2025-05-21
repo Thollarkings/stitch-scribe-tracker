@@ -1,6 +1,4 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Plus, FileText, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -10,17 +8,18 @@ interface CardActionsProps {
   handleEdit: (index: number) => void;
   onDelete: (index: number) => void;
   onNewJobClick: () => void;
+  onServiceInvoiceClick: () => void;
 }
 
-const CardActions: React.FC<CardActionsProps> = ({ 
+const CardActions: React.FC<CardActionsProps> = ({
   measurementId,
-  index, 
-  handleEdit, 
+  index,
+  handleEdit,
   onDelete,
-  onNewJobClick
+  onNewJobClick,
+  onServiceInvoiceClick
 }) => {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const navigate = useNavigate();
 
   const handleDeleteClick = () => {
     if (confirmingDelete) {
@@ -29,38 +28,35 @@ const CardActions: React.FC<CardActionsProps> = ({
     } else {
       setConfirmingDelete(true);
       const timer = setTimeout(() => setConfirmingDelete(false), 3000);
+      // Clean up the timer if the component unmounts
       return () => clearTimeout(timer);
     }
   };
 
-  const handleInvoiceClick = () => {
-    navigate(`/invoice/${measurementId}`);
-  };
-
   return (
     <div className="flex items-center space-x-2">
-      <Button 
-        size="sm" 
-        variant="outline" 
+      <Button
+        size="sm"
+        variant="outline"
         className="bg-white/80 hover:bg-white"
         onClick={onNewJobClick}
       >
         <Plus className="h-4 w-4 mr-1" /> New Job
       </Button>
 
-      <Button 
-        size="sm" 
-        variant="outline" 
+      <Button
+        size="sm"
+        variant="outline"
         className="bg-white/80 hover:bg-white"
-        onClick={handleInvoiceClick}
+        onClick={onServiceInvoiceClick}
       >
         <FileText className="h-4 w-4 mr-1" /> Service Invoice
       </Button>
-      
+
       <Button size="sm" variant="ghost" onClick={() => handleEdit(index)}>
         <Edit className="h-4 w-4 mr-1" /> Edit
       </Button>
-      
+
       <Button
         size="sm"
         variant={confirmingDelete ? 'destructive' : 'ghost'}

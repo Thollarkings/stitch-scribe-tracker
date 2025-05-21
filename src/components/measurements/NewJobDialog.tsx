@@ -2,12 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { 
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { getCurrencySymbol } from '@/utils/formatters';
+import { useToast } from '@/components/ui/use-toast';
+
+interface JobData {
+  serviceCharge: number;
+  paidAmount: number;
+  balance: number;
+  collectionDateType: 'estimated' | 'exact';
+  serviceChargeCurrency: string;
+  clientId: string;
+  clientName: string;
+  timestamp: string;
+  collectionDate: string | null;
+  recordedDateTime: string;
+}
 
 interface NewJobDialogProps {
   isOpen: boolean;
@@ -15,7 +39,8 @@ interface NewJobDialogProps {
   clientName: string;
   clientId: string;
   defaultCurrency: string;
-  onSubmit: (clientId: string, jobData: any) => void;
+  onSubmit: (clientId: string, jobData: JobData) => Promise<void>;
+  isSubmitting: boolean;
 }
 
 const NewJobDialog: React.FC<NewJobDialogProps> = ({ 
@@ -24,10 +49,15 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
   clientName, 
   clientId,
   defaultCurrency,
-  onSubmit 
+  onSubmit,
+  isSubmitting
 }) => {
+  const { toast } = useToast();
   const [collectionDate, setCollectionDate] = useState<Date | undefined>(undefined);
-  const [jobData, setJobData] = useState({
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [jobData, setJobData] = useState<Omit<JobData, 
+    'clientId' | 'clientName' | 'timestamp' | 'recordedDateTime' | 'balance'
+  > & { balance: string }>({
     serviceCharge: '',
     paidAmount: '', 
     balance: '', 
@@ -35,31 +65,55 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
     serviceChargeCurrency: defaultCurrency || 'NGN'
   });
 
-  const handleSubmit = () => {
-    // Calculate balance based on service charge and paid amount
-    const serviceCharge = parseFloat(jobData.serviceCharge || '0');
-    const paidAmount = parseFloat(jobData.paidAmount || '0');
-    const calculatedBalance = serviceCharge - paidAmount;
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
     
-    // Convert string values to numbers where appropriate
-    const newJobData = {
-      ...jobData,
-      serviceCharge: serviceCharge,
-      paidAmount: paidAmount,
-      balance: calculatedBalance,
-      clientId,
-      clientName,
-      timestamp: new Date().toISOString(),
-      collectionDate: collectionDate ? collectionDate.toISOString() : null,
-      recordedDateTime: new Date().toISOString()
-    };
+    if (!jobData.serviceCharge || isNaN(Number(jobData.serviceCharge))) {
+      errors.serviceCharge = 'Valid service charge required';
+    }
     
-    onSubmit(clientId, newJobData);
-    resetForm();
+    if (jobData.paidAmount && isNaN(Number(jobData.paidAmount))) {
+      errors.paidAmount = 'Enter a valid number';
+    }
+    
+    if (!collectionDate) {
+      errors.collectionDate = 'Collection date required';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      const numericData = {
+        serviceCharge: Number(jobData.serviceCharge),
+        paidAmount: Number(jobData.paidAmount || '0'),
+        balance: Number(jobData.balance || '0'),
+        collectionDateType: jobData.collectionDateType,
+        serviceChargeCurrency: jobData.serviceChargeCurrency,
+        clientId,
+        clientName,
+        timestamp: new Date().toISOString(),
+        collectionDate: collectionDate ? collectionDate.toISOString() : null,
+        recordedDateTime: new Date().toISOString()
+      };
+
+      await onSubmit(clientId, numericData);
+      resetForm();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save job data',
+        variant: 'destructive'
+      });
+      console.error('Error saving job:', error);
+    }
   };
 
   const resetForm = () => {
-    onOpenChange(false);
     setCollectionDate(undefined);
     setJobData({
       serviceCharge: '',
@@ -68,16 +122,31 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
       collectionDateType: 'estimated',
       serviceChargeCurrency: defaultCurrency || 'NGN'
     });
+    setFormErrors({});
+    onOpenChange(false);
   };
 
-  // Auto-calculate balance whenever service charge or paid amount changes
+  // Auto-calculate balance
   useEffect(() => {
-    if (jobData.serviceCharge || jobData.paidAmount) {
-      const calculatedBalance = 
-        (parseFloat(jobData.serviceCharge || '0') - parseFloat(jobData.paidAmount || '0')).toFixed(2);
-      setJobData(prev => ({...prev, balance: calculatedBalance }));
-    }
+    const serviceCharge = parseFloat(jobData.serviceCharge || '0');
+    const paidAmount = parseFloat(jobData.paidAmount || '0');
+    const balance = serviceCharge - paidAmount;
+    
+    setJobData(prev => ({
+      ...prev,
+      balance: isNaN(balance) ? '' : balance.toFixed(2)
+    }));
   }, [jobData.serviceCharge, jobData.paidAmount]);
+
+  const handleNumericInput = (field: 'serviceCharge' | 'paidAmount', value: string) => {
+    // Allow only numbers and decimal points
+    if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+      setJobData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -87,34 +156,38 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
+          {/* Collection Date Type */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="collection-date-type" className="col-span-4">
               Collection Date Type
             </Label>
-            <div className="flex items-center space-x-2 col-span-4">
-              <input
-                type="radio"
-                id="estimated"
-                value="estimated"
-                checked={jobData.collectionDateType === 'estimated'}
-                onChange={() => setJobData({...jobData, collectionDateType: 'estimated'})}
-                className="h-4 w-4"
-              />
-              <Label htmlFor="estimated">Estimated</Label>
-            </div>
-            <div className="flex items-center space-x-2 col-span-4">
-              <input
-                type="radio"
-                id="exact"
-                value="exact"
-                checked={jobData.collectionDateType === 'exact'}
-                onChange={() => setJobData({...jobData, collectionDateType: 'exact'})}
-                className="h-4 w-4"
-              />
-              <Label htmlFor="exact">Exact</Label>
+            <div className="flex items-center space-x-4 col-span-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="estimated"
+                  value="estimated"
+                  checked={jobData.collectionDateType === 'estimated'}
+                  onChange={() => setJobData({...jobData, collectionDateType: 'estimated'})}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="estimated">Estimated</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="exact"
+                  value="exact"
+                  checked={jobData.collectionDateType === 'exact'}
+                  onChange={() => setJobData({...jobData, collectionDateType: 'exact'})}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="exact">Exact</Label>
+              </div>
             </div>
           </div>
 
+          {/* Collection Date */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="collection-date" className="col-span-4">
               {jobData.collectionDateType === 'exact' ? 'Exact' : 'Estimated'} Collection Date
@@ -138,19 +211,24 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
                     selected={collectionDate}
                     onSelect={setCollectionDate}
                     initialFocus
+                    fromDate={new Date()}
                   />
                 </PopoverContent>
               </Popover>
+              {formErrors.collectionDate && (
+                <p className="text-sm text-red-500 mt-1">{formErrors.collectionDate}</p>
+              )}
             </div>
           </div>
 
+          {/* Currency */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="service-charge-currency" className="col-span-4">
               Currency
             </Label>
             <select
               id="service-charge-currency"
-              className="col-span-4 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2"
+              className="col-span-4 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={jobData.serviceChargeCurrency}
               onChange={(e) => setJobData({...jobData, serviceChargeCurrency: e.target.value})}
             >
@@ -162,9 +240,10 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
             </select>
           </div>
 
+          {/* Service Charge */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="service-charge" className="col-span-4">
-              Service Charge
+              Service Charge *
             </Label>
             <div className="flex col-span-4">
               <div className="flex items-center px-3 border rounded-l-md bg-muted/50 h-10">
@@ -172,17 +251,18 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
               </div>
               <Input
                 id="service-charge"
-                type="number"
                 placeholder="0.00"
                 value={jobData.serviceCharge}
-                onChange={(e) => setJobData({...jobData, serviceCharge: e.target.value})}
+                onChange={(e) => handleNumericInput('serviceCharge', e.target.value)}
                 className="rounded-l-none"
-                min="0"
-                step="0.01"
               />
             </div>
+            {formErrors.serviceCharge && (
+              <p className="text-sm text-red-500 col-span-4 -mt-2">{formErrors.serviceCharge}</p>
+            )}
           </div>
           
+          {/* Paid Amount */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="paid-amount" className="col-span-4">
               Paid Amount
@@ -193,17 +273,18 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
               </div>
               <Input
                 id="paid-amount"
-                type="number"
                 placeholder="0.00"
                 value={jobData.paidAmount}
-                onChange={(e) => setJobData({...jobData, paidAmount: e.target.value})}
+                onChange={(e) => handleNumericInput('paidAmount', e.target.value)}
                 className="rounded-l-none"
-                min="0"
-                step="0.01"
               />
             </div>
+            {formErrors.paidAmount && (
+              <p className="text-sm text-red-500 col-span-4 -mt-2">{formErrors.paidAmount}</p>
+            )}
           </div>
           
+          {/* Balance */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="balance" className="col-span-4">
               Balance (Calculated)
@@ -214,7 +295,6 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
               </div>
               <Input
                 id="balance"
-                type="text"
                 value={jobData.balance}
                 className="rounded-l-none bg-gray-50"
                 readOnly
@@ -224,10 +304,21 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={resetForm}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={resetForm}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
-          <Button type="button" onClick={handleSubmit}>Save Job</Button>
+          <Button 
+            type="button" 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : 'Save Job'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
