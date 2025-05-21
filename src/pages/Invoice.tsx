@@ -178,7 +178,7 @@ const Invoice = () => {
     <div className="container mx-auto px-4 py-6 bg-white min-h-screen">
       <Button 
         variant="outline" 
-        onClick={() => navigate('/stitch-scribe-tracker')}
+        onClick={() => navigate('/')}
         className="mb-4"
       >
         <ArrowLeft className="h-4 w-4 mr-1" /> Back to Dashboard
