@@ -40,6 +40,8 @@ export const useMeasurements = () => {
         collectionDate: measurementData.collectionDate instanceof Date 
           ? measurementData.collectionDate.toISOString() 
           : measurementData.collectionDate,
+        // Ensure jobs array is handled properly
+        jobs: Array.isArray(measurementData.jobs) ? JSON.stringify(measurementData.jobs) : null
       };
 
       if (isEditing) {
@@ -134,6 +136,7 @@ export const useMeasurements = () => {
           timestamp: item.timestamp || new Date().toISOString(),
           collectionDate: item.collectionDate,
           collectionDateType: item.collectionDateType || 'estimated',
+          jobs: item.jobs ? JSON.stringify(item.jobs) : null,
         };
       });
           
@@ -163,8 +166,28 @@ export const useMeasurements = () => {
     }
   }, [user]);
 
+  // Parse jobs array when fetching measurements
+  const parsedMeasurements = measurements.map(measurement => {
+    try {
+      // If jobs is a string, try to parse it
+      if (typeof measurement.jobs === 'string') {
+        return {
+          ...measurement,
+          jobs: JSON.parse(measurement.jobs)
+        };
+      }
+      return measurement;
+    } catch (e) {
+      console.error("Error parsing jobs:", e);
+      return {
+        ...measurement,
+        jobs: []
+      };
+    }
+  });
+
   return {
-    measurements,
+    measurements: parsedMeasurements,
     isLoading,
     fetchMeasurements,
     saveMeasurement,

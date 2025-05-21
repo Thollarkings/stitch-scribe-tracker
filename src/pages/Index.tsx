@@ -76,9 +76,24 @@ const Index = () => {
   };
 
   const handleAddJob = (clientId: string, jobData: any) => {
-    // For now, just show a toast as we don't have a separate jobs table
-    toast.success(`Added new job for ${jobData.clientName}`);
-    // In a real implementation, we would save this to a jobs table in the database
+    // Find the measurement to update
+    const measurementIndex = measurements.findIndex(m => m.id === clientId);
+    
+    if (measurementIndex >= 0) {
+      const measurement = measurements[measurementIndex];
+      
+      // Create updated measurement with the new job
+      const updatedMeasurement = {
+        ...measurement,
+        jobs: Array.isArray(measurement.jobs) ? [...measurement.jobs, jobData] : [jobData]
+      };
+      
+      // Save the updated measurement
+      saveMeasurement(updatedMeasurement, true);
+      toast.success(`Added new job for ${jobData.clientName}`);
+    } else {
+      toast.error("Could not find measurement to add job to");
+    }
   };
 
   const filteredMeasurements = measurements.filter(measurement =>

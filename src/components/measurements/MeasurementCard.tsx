@@ -10,7 +10,7 @@ import {
   CollapsibleTrigger
 } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-import { Edit, Trash2, ChevronDown, Plus, FileText } from 'lucide-react';
+import { Edit, Trash2, ChevronDown, Plus, FileText, ListTodo } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface MeasurementCardProps {
   measurement: Record<string, any>;
@@ -52,16 +53,40 @@ const MeasurementCard = ({
 }: MeasurementCardProps) => {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [jobListOpen, setJobListOpen] = useState(false);
   const [newJobDialogOpen, setNewJobDialogOpen] = useState(false);
   const [collectionDate, setCollectionDate] = useState<Date | undefined>(undefined);
   const [newJobData, setNewJobData] = useState({
     serviceCharge: '',
-    paidAmount: '', // Added paidAmount field
-    balance: '', // Added balance field (could be calculated)
+    paidAmount: '', 
+    balance: '', 
     collectionDateType: 'estimated',
     serviceChargeCurrency: measurement.serviceChargeCurrency || 'NGN'
   });
   const navigate = useNavigate();
+
+  // Helper function to get all jobs (initial + additional)
+  const getAllJobs = () => {
+    const initialJob = {
+      recordedDateTime: measurement.timestamp,
+      collectionDate: measurement.collectionDate,
+      serviceCharge: measurement.serviceCharge || '0',
+      paidAmount: measurement.paidAmount || '0',
+      balance: parseFloat(measurement.serviceCharge || '0') - parseFloat(measurement.paidAmount || '0'),
+      serviceChargeCurrency: measurement.serviceChargeCurrency || 'NGN',
+      label: 'Initial Job'
+    };
+    
+    // measurement.jobs is an array of job objects added via "New Job"
+    const jobs = Array.isArray(measurement.jobs) ? measurement.jobs : [];
+    return [initialJob, ...jobs];
+  };
+
+  // Helper to calculate total paid amount
+  const getTotalPaidAmount = () => {
+    return getAllJobs().reduce((acc, job) => 
+      acc + (typeof job.paidAmount === 'number' ? job.paidAmount : parseFloat(job.paidAmount || '0')), 0);
+  };
 
   // Define measurement fields with labels and keys
   const measurementFields = [
@@ -170,7 +195,8 @@ const MeasurementCard = ({
         clientId: measurement.id,
         clientName: measurement.name,
         timestamp: new Date().toISOString(),
-        collectionDate: collectionDate ? collectionDate.toISOString() : null
+        collectionDate: collectionDate ? collectionDate.toISOString() : null,
+        recordedDateTime: new Date().toISOString()
       };
       
       onAddJob(measurement.id, jobData);
@@ -226,6 +252,78 @@ const MeasurementCard = ({
             >
               <Plus className="h-4 w-4 mr-1" /> New Job
             </Button>
+            <DropdownMenu open={jobListOpen} onOpenChange={setJobListOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="bg-white/80 hover:bg-white"
+                >
+                  <ListTodo className="h-4 w-4 mr-1" /> Job List
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-96 bg-white" align="end">
+                <div className="p-2 space-y-2 max-h-96 overflow-y-auto">
+                  <h4 className="font-medium border-b pb-1">Client Jobs</h4>
+                  {getAllJobs().map((job, idx) => (
+                    <div key={idx} className="text-xs border rounded p-2">
+                      <div className="flex justify-between">
+                        <span className="font-medium">{job.label || `Job #${idx + 1}`}</span>
+                        <span className="text-muted-foreground">
+                          {job.recordedDateTime 
+                            ? new Date(job.recordedDateTime).toLocaleString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) 
+                            : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-2 mt-1">
+                        <div>
+                          <span className="text-muted-foreground">Collection Date:</span>
+                          <span className="ml-1">
+                            {job.collectionDate 
+                              ? new Date(job.collectionDate).toLocaleDateString() 
+                              : 'N/A'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Service Charge:</span>
+                          <span className="ml-1">
+                            {getCurrencySymbol(job.serviceChargeCurrency)}
+                            {parseFloat(job.serviceCharge || '0').toFixed(2)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Paid Amount:</span>
+                          <span className="ml-1">
+                            {getCurrencySymbol(job.serviceChargeCurrency)}
+                            {parseFloat(job.paidAmount || '0').toFixed(2)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Balance:</span>
+                          <span className="ml-1">
+                            {getCurrencySymbol(job.serviceChargeCurrency)}
+                            {typeof job.balance === 'number' 
+                              ? job.balance.toFixed(2)
+                              : parseFloat(job.balance || '0').toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {/* Total row */}
+                  <div className="mt-2 pt-2 border-t font-medium flex justify-between">
+                    <span>Total Paid Amount:</span>
+                    <span>{currencySymbol} {getTotalPaidAmount().toFixed(2)}</span>
+                  </div>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button 
               size="sm" 
               variant="outline" 
