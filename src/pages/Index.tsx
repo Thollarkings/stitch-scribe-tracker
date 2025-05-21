@@ -24,7 +24,7 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [formVisible, setFormVisible] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const importRef = useRef<HTMLButtonElement>(null);
+  const importRef = useRef<HTMLDivElement>(null);
 
   const handleSave = async (measurementData: any) => {
     const success = await saveMeasurement(

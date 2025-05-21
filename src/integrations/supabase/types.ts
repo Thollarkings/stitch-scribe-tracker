@@ -12,120 +12,147 @@ export type Database = {
       measurements: {
         Row: {
           ankle: number | null
+          balance: string | null
           calf: number | null
           chest: number | null
           collectiondate: string | null
+          collectionDate: string | null
           collectiondatetype: string | null
+          collectionDateType: string | null
+          comments: string | null
           crotch: number | null
           delivery_date: string | null
           email: string | null
           gender: string | null
-          gownlength: number | null
-          halflength: number | null
+          gownLength: number | null
+          halfLength: number | null
           head: number | null
+          hip: number | null
           hips: number | null
           id: string
           inseam: number | null
-          insidelegseam: number | null
+          insideLegSeam: number | null
           name: string
           neck: number | null
-          nippletonipple: number | null
+          nippleToNipple: number | null
           notes: string | null
           outseam: number | null
+          paidAmount: string | null
           phone: string | null
-          roundsleeve: number | null
+          roundSleeve: number | null
+          serviceCharge: string | null
           shoulders: number | null
-          shouldertonipple: number | null
-          shouldertoshoulder: number | null
-          shouldertounderbust: number | null
-          shouldertowaist: number | null
-          sleeve_length: number | null
+          shoulderToNipple: number | null
+          shoulderToShoulder: number | null
+          shoulderToUnderbust: number | null
+          shoulderToWaist: number | null
+          sleeve_length: string | null
+          sleeveLength: number | null
           status: string | null
           thigh: number | null
           timestamp: string | null
-          toplength: number | null
-          trouserwaist: number | null
+          topLength: number | null
+          trouserLength: string | null
+          trouserWaist: number | null
           user_id: string
           waist: number | null
-          waisttoknee: number | null
+          waistToKnee: number | null
         }
         Insert: {
           ankle?: number | null
+          balance?: string | null
           calf?: number | null
           chest?: number | null
           collectiondate?: string | null
+          collectionDate?: string | null
           collectiondatetype?: string | null
+          collectionDateType?: string | null
+          comments?: string | null
           crotch?: number | null
           delivery_date?: string | null
           email?: string | null
           gender?: string | null
-          gownlength?: number | null
-          halflength?: number | null
+          gownLength?: number | null
+          halfLength?: number | null
           head?: number | null
+          hip?: number | null
           hips?: number | null
           id?: string
           inseam?: number | null
-          insidelegseam?: number | null
+          insideLegSeam?: number | null
           name: string
           neck?: number | null
-          nippletonipple?: number | null
+          nippleToNipple?: number | null
           notes?: string | null
           outseam?: number | null
+          paidAmount?: string | null
           phone?: string | null
-          roundsleeve?: number | null
+          roundSleeve?: number | null
+          serviceCharge?: string | null
           shoulders?: number | null
-          shouldertonipple?: number | null
-          shouldertoshoulder?: number | null
-          shouldertounderbust?: number | null
-          shouldertowaist?: number | null
-          sleeve_length?: number | null
+          shoulderToNipple?: number | null
+          shoulderToShoulder?: number | null
+          shoulderToUnderbust?: number | null
+          shoulderToWaist?: number | null
+          sleeve_length?: string | null
+          sleeveLength?: number | null
           status?: string | null
           thigh?: number | null
           timestamp?: string | null
-          toplength?: number | null
-          trouserwaist?: number | null
+          topLength?: number | null
+          trouserLength?: string | null
+          trouserWaist?: number | null
           user_id: string
           waist?: number | null
-          waisttoknee?: number | null
+          waistToKnee?: number | null
         }
         Update: {
           ankle?: number | null
+          balance?: string | null
           calf?: number | null
           chest?: number | null
           collectiondate?: string | null
+          collectionDate?: string | null
           collectiondatetype?: string | null
+          collectionDateType?: string | null
+          comments?: string | null
           crotch?: number | null
           delivery_date?: string | null
           email?: string | null
           gender?: string | null
-          gownlength?: number | null
-          halflength?: number | null
+          gownLength?: number | null
+          halfLength?: number | null
           head?: number | null
+          hip?: number | null
           hips?: number | null
           id?: string
           inseam?: number | null
-          insidelegseam?: number | null
+          insideLegSeam?: number | null
           name?: string
           neck?: number | null
-          nippletonipple?: number | null
+          nippleToNipple?: number | null
           notes?: string | null
           outseam?: number | null
+          paidAmount?: string | null
           phone?: string | null
-          roundsleeve?: number | null
+          roundSleeve?: number | null
+          serviceCharge?: string | null
           shoulders?: number | null
-          shouldertonipple?: number | null
-          shouldertoshoulder?: number | null
-          shouldertounderbust?: number | null
-          shouldertowaist?: number | null
-          sleeve_length?: number | null
+          shoulderToNipple?: number | null
+          shoulderToShoulder?: number | null
+          shoulderToUnderbust?: number | null
+          shoulderToWaist?: number | null
+          sleeve_length?: string | null
+          sleeveLength?: number | null
           status?: string | null
           thigh?: number | null
           timestamp?: string | null
-          toplength?: number | null
-          trouserwaist?: number | null
+          topLength?: number | null
+          trouserLength?: string | null
+          trouserWaist?: number | null
           user_id?: string
           waist?: number | null
-          waisttoknee?: number | null
+          waistToKnee?: number | null
         }
         Relationships: []
       }
