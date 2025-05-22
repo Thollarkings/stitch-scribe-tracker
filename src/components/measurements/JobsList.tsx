@@ -122,14 +122,16 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
 
     if (editingJobIndex === 0) {
       // Initial job: update top-level measurement fields only
+      // Fix: Convert numeric values to strings to match database column types
       const updatedMeasurement = {
         ...measurement,
         description: editForm.description, // Include job description in updates
         collectionDateType: editForm.collectionDateType,
         collectionDate: editForm.collectionDate,
-        serviceCharge: editForm.serviceCharge,
-        paidAmount: editForm.paidAmount,
-        balance: editForm.balance,
+        // Convert to strings as expected by the database
+        serviceCharge: editForm.serviceCharge?.toString(),
+        paidAmount: editForm.paidAmount?.toString(),
+        balance: editForm.balance?.toString(),
       };
       onUpdateMeasurement(updatedMeasurement);
     } else {
@@ -160,9 +162,9 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
         description: '', // Clear job description
         collectionDateType: null,
         collectionDate: null,
-        serviceCharge: 0,
-        paidAmount: 0,
-        balance: 0,
+        serviceCharge: '0',  // Changed to string
+        paidAmount: '0',     // Changed to string
+        balance: '0',        // Changed to string
       };
       onUpdateMeasurement(clearedMeasurement);
     } else {

@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -113,6 +114,20 @@ const Index = () => {
   };
 
   const handleUpdateMeasurement = async (updatedMeasurement: any): Promise<void> => {
+    // Ensure numeric fields are properly handled for consistency with database
+    if (typeof updatedMeasurement.serviceCharge === 'number') {
+      updatedMeasurement.serviceCharge = updatedMeasurement.serviceCharge.toString();
+    }
+    if (typeof updatedMeasurement.paidAmount === 'number') {
+      updatedMeasurement.paidAmount = updatedMeasurement.paidAmount.toString();
+    }
+    if (typeof updatedMeasurement.balance === 'number') {
+      updatedMeasurement.balance = updatedMeasurement.balance.toString();
+    }
+
+    // Log what we're sending to debug
+    console.log("Updating measurement:", JSON.stringify(updatedMeasurement));
+    
     const success = await saveMeasurement(updatedMeasurement, true);
     if (success) {
       toast.success(`Updated job for ${updatedMeasurement.name}`);

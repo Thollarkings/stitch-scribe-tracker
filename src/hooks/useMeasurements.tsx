@@ -33,20 +33,32 @@ export const useMeasurements = () => {
   // Save or update a measurement
   const saveMeasurement = async (measurementData: any, isEditing: boolean = false) => {
     try {
+      console.log('Saving measurement data:', JSON.stringify(measurementData));
+      
       // Prepare data to save - handle numeric fields
       const dataToSave = {
         ...measurementData,
         user_id: user?.id,
-        // Ensure balance is saved as string to match the database column type
-        balance: measurementData.balance?.toString(),
-        paidAmount: measurementData.paidAmount?.toString(),
-        serviceCharge: measurementData.serviceCharge?.toString(),
+        // Ensure numeric values are saved as strings to match the database column type
+        balance: typeof measurementData.balance === 'number' 
+          ? measurementData.balance.toString() 
+          : measurementData.balance,
+        paidAmount: typeof measurementData.paidAmount === 'number' 
+          ? measurementData.paidAmount.toString() 
+          : measurementData.paidAmount,
+        serviceCharge: typeof measurementData.serviceCharge === 'number' 
+          ? measurementData.serviceCharge.toString() 
+          : measurementData.serviceCharge,
         collectionDate: measurementData.collectionDate instanceof Date
           ? measurementData.collectionDate.toISOString()
           : measurementData.collectionDate,
-        // Make sure jobs is handled properly - pass directly as object
-        jobs: measurementData.jobs,
+        // Make sure jobs is handled properly - parse if string or pass directly if object
+        jobs: typeof measurementData.jobs === 'string' 
+          ? JSON.parse(measurementData.jobs) 
+          : measurementData.jobs,
       };
+
+      console.log('Data to save after processing:', JSON.stringify(dataToSave));
 
       if (isEditing) {
         // Update existing measurement
