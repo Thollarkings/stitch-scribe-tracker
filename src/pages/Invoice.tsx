@@ -15,35 +15,35 @@ import { PDFDocument, rgb } from 'pdf-lib';
 const colorSchemes = [
   {
     name: 'Professional Blue',
-    headerBg: 'bg-gradient-to-r from-blue-700 via-blue-400 to-blue-700',
+    headerBg: 'bg-[linear-gradient(to_right,#1e40af,#1e3a8a,#1e3a8a,#3b82f6,#1e40af,#3b82f6,#2563eb)]',
     headerText: 'text-white',
     accent: 'border-blue-500',
     secondary: 'bg-blue-50',
   },
   {
     name: 'Modern Green',
-    headerBg: 'bg-gradient-to-r from-emerald-700 via-emerald-400 to-emerald-700',
+    headerBg: 'bg-[linear-gradient(to_right,#14532d,#047857,#047857,#10b981,#14532d,#10b981,#047857)]',
     headerText: 'text-white',
     accent: 'border-emerald-500',
     secondary: 'bg-emerald-50',
   },
   {
     name: 'Elegant Purple',
-    headerBg: 'bg-gradient-to-r from-purple-700 via-purple-400 to-purple-700',
+    headerBg: 'bg-[linear-gradient(to_right,#44337a,#44337a,#44337a,#7e3af2,#6c2bd9,#7e3af2,#a78bfa)]',
     headerText: 'text-white',
     accent: 'border-purple-500',
     secondary: 'bg-purple-50',
   },
   {
     name: 'Vibrant Orange',
-    headerBg: 'bg-gradient-to-r from-orange-900 via-orange-400 to-orange-700',
-    headerText: 'text-white',
+    headerBg: 'bg-[linear-gradient(to_right,#f59e0b,#f59e0b,#ea580c,#ea580c,#f59e0b,#b45309,#f59e0b,#ea580c)]',
+    headerText: 'text-black',
     accent: 'border-orange-500',
     secondary: 'bg-orange-50',
   },
   {
-    name: 'Classic Gray',
-    headerBg: 'bg-gradient-to-r from-gray-800 via-gray-500 to-gray-900',
+    name: 'Black Luxury',
+    headerBg: 'bg-[linear-gradient(to_right,#000000,#1a1a1a,#1a1a1a,#333333,#1a1a1a,#333333,#1a1a1a)]',
     headerText: 'text-white',
     accent: 'border-gray-500',
     secondary: 'bg-gray-50',
@@ -57,8 +57,8 @@ const colorSchemes = [
   },
   {
     name: 'Silver',
-    headerBg: 'bg-gradient-to-r from-gray-200 via-gray-400 to-gray-300',
-    headerText: 'text-gray-800',
+    headerBg: 'bg-[linear-gradient(to_right,#4b5563,#6b7280,#6b7280,#9ca3af,#6b7280,#9ca3af,#6b7280)]',
+    headerText: 'text-white',
     accent: 'border-gray-400',
     secondary: 'bg-gray-100',
   },
@@ -418,6 +418,11 @@ const Invoice = () => {
                       <h1 className="text-2xl font-bold">{invoiceData.companyName || "Your Company Name"}</h1>
                       <p className="opacity-90">{invoiceData.companyPhone || "Phone Number"}</p>
                       <p className="opacity-90 whitespace-pre-line">{invoiceData.companyAddress || "Company Address"}</p>
+                      {invoiceData.companyEmail && (
+                      <p>
+                        <span className="font-medium">Email:</span> {invoiceData.companyEmail}
+                      </p>
+                    )}
                     </div>
                     {invoiceData.companyLogo && (
                       <div className="flex-shrink-0">
@@ -538,11 +543,7 @@ const Invoice = () => {
                       <span className="font-medium">Bank Name:</span>{" "}
                       {invoiceData.companyBankName || <span className="text-gray-400">N/A</span>}
                     </p>
-                    {invoiceData.companyEmail && (
-                      <p>
-                        <span className="font-medium">Email:</span> {invoiceData.companyEmail}
-                      </p>
-                    )}
+                    
                   </div>
                 </div>
               </div>

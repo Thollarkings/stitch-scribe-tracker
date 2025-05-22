@@ -1,14 +1,12 @@
-
 import React, { useState } from 'react';
 import { ListTodo, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { getCurrencySymbol } from '@/utils/formatters';
 
 interface Job {
   label?: string;
-  description?: string; // Added job description field
+  description?: string;
   recordedDateTime?: string;
   collectionDate?: string | null;
   collectionDateType?: string;
@@ -19,18 +17,17 @@ interface Job {
 }
 
 interface JobsListProps {
-  measurement: any; // full measurement object with top-level fields + jobs array
+  measurement: any;
   currency: string;
   onOpenChange: (open: boolean) => void;
   isOpen: boolean;
-  onUpdateMeasurement?: (updatedMeasurement: any) => void; // callback to update measurement
+  onUpdateMeasurement?: (updatedMeasurement: any) => void;
 }
 
-// Helper to get all jobs (initial + additional)
 const getAllJobs = (measurement: any, currency: string): Job[] => {
   const initialJob: Job = {
     label: 'Initial Job',
-    description: measurement.description || '', // Added job description field
+    description: measurement.description || '',
     recordedDateTime: measurement.timestamp,
     collectionDate: measurement.collectionDate,
     collectionDateType: measurement.collectionDateType,
@@ -57,15 +54,12 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
 
   const formatDate = (dateStr: string | undefined | null, type: string | undefined) => {
     if (!dateStr) return 'N/A';
-    
     const formattedDate = new Date(dateStr).toLocaleDateString('en-US', {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
-    
-    // Add the collection date type in parentheses before the date
     return type ? `(${type}) ${formattedDate}` : formattedDate;
   };
 
@@ -106,7 +100,6 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
   const onChangeField = (field: keyof Job, value: any) => {
     setEditForm(prev => {
       let updated = { ...prev, [field]: value };
-      // Auto-calc balance if serviceCharge or paidAmount changed
       if (field === 'serviceCharge' || field === 'paidAmount') {
         const sc = Number(updated.serviceCharge) || 0;
         const pa = Number(updated.paidAmount) || 0;
@@ -121,30 +114,26 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
     if (!onUpdateMeasurement || editingJobIndex === null) return;
 
     if (editingJobIndex === 0) {
-      // Initial job: update top-level measurement fields only
-      // Fix: Convert numeric values to strings to match database column types
       const updatedMeasurement = {
         ...measurement,
-        description: editForm.description, // Include job description in updates
+        description: editForm.description,
         collectionDateType: editForm.collectionDateType,
         collectionDate: editForm.collectionDate,
-        // Convert to strings as expected by the database
-        serviceCharge: editForm.serviceCharge?.toString(),
-        paidAmount: editForm.paidAmount?.toString(),
-        balance: editForm.balance?.toString(),
+        serviceCharge: Number(editForm.serviceCharge) || 0,
+        paidAmount: Number(editForm.paidAmount) || 0,
+        balance: Number(editForm.balance) || 0,
       };
       onUpdateMeasurement(updatedMeasurement);
     } else {
-      // Additional job: update the job in jobs array
       const updatedJobs = [...(measurement.jobs || [])];
       updatedJobs[editingJobIndex - 1] = {
         ...updatedJobs[editingJobIndex - 1],
-        description: editForm.description, // Include job description in updates
+        description: editForm.description,
         collectionDateType: editForm.collectionDateType,
         collectionDate: editForm.collectionDate,
-        serviceCharge: editForm.serviceCharge,
-        paidAmount: editForm.paidAmount,
-        balance: editForm.balance,
+        serviceCharge: Number(editForm.serviceCharge) || 0,
+        paidAmount: Number(editForm.paidAmount) || 0,
+        balance: Number(editForm.balance) || 0,
       };
       onUpdateMeasurement({ ...measurement, jobs: updatedJobs });
     }
@@ -154,119 +143,129 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
   // Delete job
   const deleteJob = (index: number) => {
     if (!onUpdateMeasurement) return;
-    
     if (index === 0) {
-      // Initial job: clear only job-related fields on measurement
       const clearedMeasurement = {
         ...measurement,
-        description: '', // Clear job description
+        description: '',
         collectionDateType: null,
         collectionDate: null,
-        serviceCharge: '0',  // Changed to string
-        paidAmount: '0',     // Changed to string
-        balance: '0',        // Changed to string
+        serviceCharge: 0,
+        paidAmount: 0,
+        balance: 0,
       };
       onUpdateMeasurement(clearedMeasurement);
     } else {
-      // Additional job: remove from jobs array
       const updatedJobs = [...(measurement.jobs || [])];
       updatedJobs.splice(index - 1, 1);
       onUpdateMeasurement({ ...measurement, jobs: updatedJobs });
     }
   };
 
+  // Drawer close helper
+  const closeDrawer = () => onOpenChange(false);
+
   return (
     <>
-      <DropdownMenu open={isOpen} onOpenChange={onOpenChange}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            size="sm"
-            variant="outline"
-            className="bg-white/80 hover:bg-white"
-          >
-            <ListTodo className="h-4 w-4 mr-1" /> Job List
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-96 bg-white" align="end">
-          <div className="p-2 space-y-2 max-h-96 overflow-y-auto">
-            <h4 className="font-medium border-b pb-1">Client Jobs</h4>
-            {jobs.map((job, idx) => (
-              <div key={idx} className="text-xs border rounded p-2">
-                <div className="flex justify-between">
-                  <span className="font-medium">{job.label || `Job #${idx}`}</span>
-                  {onUpdateMeasurement && (
-                    <div className="space-x-2">
-                      <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => openEdit(idx)}>
-                        <Edit className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-red-600 hover:text-red-800" onClick={() => deleteJob(idx)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+      {/* Button to open Drawer */}
+      <Button
+        size="sm"
+        variant="outline"
+        className="bg-white/80 hover:bg-white"
+        onClick={() => onOpenChange(true)}
+      >
+        <ListTodo className="h-4 w-4 mr-1" /> Job List
+      </Button>
+
+      {/* Drawer */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={closeDrawer}
+            aria-label="Close drawer"
+          />
+          {/* Drawer panel */}
+          <div className="relative ml-auto w-full max-w-3xl bg-white shadow-xl h-full flex flex-col overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-xl font-semibold">Client Jobs</h2>
+              <Button size="icon" variant="ghost" onClick={closeDrawer}>
+                <span className="sr-only">Close</span>
+                <svg width="24" height="24" fill="none" stroke="currentColor">
+                  <path d="M6 18L18 6M6 6l12 12" strokeWidth={2} strokeLinecap="round" />
+                </svg>
+              </Button>
+            </div>
+            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+              {jobs.map((job, idx) => (
+                <div key={idx} className="text-sm border rounded p-4 bg-gray-50">
+                  <div className="flex justify-between">
+                    <span className="font-medium">{job.label || `Job #${idx}`}</span>
+                    {onUpdateMeasurement && (
+                      <div className="space-x-2">
+                        <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => openEdit(idx)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-red-600 hover:text-red-800" onClick={() => deleteJob(idx)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  {job.description && (
+                    <div className="mt-1">
+                      <span className="text-muted-foreground">Description:</span>
+                      <span className="ml-1">{job.description}</span>
                     </div>
                   )}
-                </div>
-                
-                {/* Display job description if available */}
-                {job.description && (
                   <div className="mt-1">
-                    <span className="text-muted-foreground">Description:</span>
-                    <span className="ml-1">
-                      {job.description}
-                    </span>
-                  </div>
-                )}
-                
-                <div className="mt-1">
-                  <div>
-                    <span className="text-muted-foreground">Recorded Date:</span>
-                    <span className="ml-1">
-                      {formatDateTime(job.recordedDateTime)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Collection Date:</span>
-                    <span className="ml-1">
-                      {formatDate(job.collectionDate, job.collectionDateType)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Service Charge:</span>
-                    <span className="ml-1">
-                      {getCurrencySymbol(job.serviceChargeCurrency)}
-                      {job.serviceCharge !== null && job.serviceCharge !== undefined
-                        ? Number(job.serviceCharge).toLocaleString(undefined, { minimumFractionDigits: 2 })
-                        : '0.00'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Paid Amount:</span>
-                    <span className="ml-1">
-                      {getCurrencySymbol(job.serviceChargeCurrency)}
-                      {job.paidAmount !== null && job.paidAmount !== undefined
-                        ? Number(job.paidAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })
-                        : '0.00'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Balance:</span>
-                    <span className="ml-1">
-                      {getCurrencySymbol(job.serviceChargeCurrency)}
-                      {job.balance !== null && job.balance !== undefined
-                        ? Number(job.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })
-                        : '0.00'}
-                    </span>
+                    <div>
+                      <span className="text-muted-foreground">Recorded Date:</span>
+                      <span className="ml-1">{formatDateTime(job.recordedDateTime)}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Collection Date:</span>
+                      <span className="ml-1">{formatDate(job.collectionDate, job.collectionDateType)}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Service Charge:</span>
+                      <span className="ml-1">
+                        {getCurrencySymbol(job.serviceChargeCurrency)}
+                        {job.serviceCharge !== null && job.serviceCharge !== undefined
+                          ? Number(job.serviceCharge).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                          : '0.00'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Paid Amount:</span>
+                      <span className="ml-1">
+                        {getCurrencySymbol(job.serviceChargeCurrency)}
+                        {job.paidAmount !== null && job.paidAmount !== undefined
+                          ? Number(job.paidAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                          : '0.00'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Balance:</span>
+                      <span className="ml-1">
+                        {getCurrencySymbol(job.serviceChargeCurrency)}
+                        {job.balance !== null && job.balance !== undefined
+                          ? Number(job.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                          : '0.00'}
+                      </span>
+                    </div>
                   </div>
                 </div>
+              ))}
+              {/* Total row */}
+              <div className="mt-2 pt-2 border-t font-medium flex justify-between">
+                <span>Total Paid Amount:</span>
+                <span>{getCurrencySymbol(currency)} {getTotalPaidAmount().toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
-            ))}
-            {/* Total row */}
-            <div className="mt-2 pt-2 border-t font-medium flex justify-between">
-              <span>Total Paid Amount:</span>
-              <span>{getCurrencySymbol(currency)} {getTotalPaidAmount().toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </div>
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={(open) => !open && closeEdit()}>
@@ -275,7 +274,6 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
             <DialogTitle>Edit Job - {editingJobIndex === 0 ? 'Initial Job' : `Job #${editingJobIndex}`}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {/* Add Job Description field to the edit form */}
             <div>
               <label className="block mb-1 text-sm font-medium">Job Description</label>
               <input
