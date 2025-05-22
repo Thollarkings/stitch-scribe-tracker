@@ -1,3 +1,4 @@
+
 import { useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -62,32 +63,35 @@ const ImportFile = ({ onImport }: ImportFileProps) => {
 
         if (Array.isArray(importedData)) {
           importedData = importedData.map((measurement) => {
-            const obj: any = { ...measurement };
+            // Use a mutable copy instead of trying to modify the constant
+            let processedMeasurement = { ...measurement };
 
             // Normalize comments/notes
-            if (!obj.comments && obj.notes) obj.comments = obj.notes;
+            if (!processedMeasurement.comments && processedMeasurement.notes) {
+              processedMeasurement.comments = processedMeasurement.notes;
+            }
 
             // Process initial job data if available
-            obj = extractInitialJobData(obj);
+            processedMeasurement = extractInitialJobData(processedMeasurement);
 
             // Parse numeric fields, preserving nulls
             numericFields.forEach(field => {
-              obj[field] = parseNumberOrNull(obj[field]);
+              processedMeasurement[field] = parseNumberOrNull(processedMeasurement[field]);
             });
 
             // Ensure balance is present and correct
             if (
-              typeof obj.serviceCharge === 'number' &&
-              typeof obj.paidAmount === 'number'
+              typeof processedMeasurement.serviceCharge === 'number' &&
+              typeof processedMeasurement.paidAmount === 'number'
             ) {
-              obj.balance = obj.serviceCharge - obj.paidAmount;
+              processedMeasurement.balance = processedMeasurement.serviceCharge - processedMeasurement.paidAmount;
             } else {
-              obj.balance = 0;
+              processedMeasurement.balance = 0;
             }
 
             // If jobs array exists, normalize numeric fields inside jobs too
-            if (Array.isArray(obj.jobs)) {
-              obj.jobs = obj.jobs.map((job: any) => {
+            if (Array.isArray(processedMeasurement.jobs)) {
+              processedMeasurement.jobs = processedMeasurement.jobs.map((job: any) => {
                 const jobCopy = { ...job };
                 numericFields.forEach(field => {
                   jobCopy[field] = parseNumberOrNull(jobCopy[field]);
@@ -104,7 +108,7 @@ const ImportFile = ({ onImport }: ImportFileProps) => {
               });
             }
 
-            return obj;
+            return processedMeasurement;
           });
 
           // (Optional) Log for debugging
