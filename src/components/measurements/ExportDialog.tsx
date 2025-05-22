@@ -10,51 +10,72 @@ interface ExportDialogProps {
   measurements: any[];
 }
 
+// List of all possible numeric fields
+const numericFields = [
+  'serviceCharge', 'paidAmount', 'balance',
+  'head', 'neck', 'shoulderToShoulder', 'chest', 'waist',
+  'shoulderToNipple', 'shoulderToUnderbust', 'shoulderToWaist', 'nippleToNipple',
+  'sleeveLength', 'roundSleeve', 'hip', 'halfLength', 'topLength', 'gownLength',
+  'trouserWaist', 'crotch', 'trouserLength', 'thigh', 'waistToKnee', 'calf', 'ankle', 'insideLegSeam'
+];
+
+// Helper to ensure all numeric fields are numbers or null
+const parseNumberOrNull = (value: any) => {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  return isNaN(n) ? null : n;
+};
+
 const ExportDialog = ({ open, onOpenChange, measurements }: ExportDialogProps) => {
   const [exportFilename, setExportFilename] = useState('tailors_logbook_export');
 
   const downloadExportedData = (customFilename?: string) => {
     try {
       const filename = (customFilename || 'tailors_logbook_export').replace(/[^a-zA-Z0-9-_]/g, '_');
+
+      // Normalize all measurements for export
       const exportData = measurements.map(m => {
-        const serviceCharge = typeof m.serviceCharge === 'number' ? m.serviceCharge : parseFloat(m.serviceCharge || '0');
-        const paidAmount = typeof m.paidAmount === 'number' ? m.paidAmount : parseFloat(m.paidAmount || '0');
-        const balance = typeof m.balance === 'number' ? m.balance : (serviceCharge - paidAmount);
-        return {
-          name: m.name,
-          phone: m.phone,
-          comments: m.comments || m.notes,
-          collectionDateType: m.collectionDateType,
-          timestamp: m.timestamp,
-          collectionDate: m.collectionDate,
-          serviceCharge,
-          paidAmount,
-          serviceChargeCurrency: m.serviceChargeCurrency,
-          balance,
-          head: m.head,
-          neck: m.neck,
-          shoulderToShoulder: m.shoulderToShoulder,
-          chest: m.chest,
-          waist: m.waist,
-          shoulderToNipple: m.shoulderToNipple,
-          shoulderToUnderbust: m.shoulderToUnderbust,
-          shoulderToWaist: m.shoulderToWaist,
-          nippleToNipple: m.nippleToNipple,
-          sleeveLength: m.sleeveLength,
-          roundSleeve: m.roundSleeve,
-          hip: m.hip,
-          halfLength: m.halfLength,
-          topLength: m.topLength,
-          gownLength: m.gownLength,
-          trouserWaist: m.trouserWaist,
-          crotch: m.crotch,
-          trouserLength: m.trouserLength,
-          thigh: m.thigh,
-          waistToKnee: m.waistToKnee,
-          calf: m.calf,
-          ankle: m.ankle,
-          insideLegSeam: m.insideLegSeam,
-        };
+        // Ensure all numeric fields are numbers or null
+        const normalized: any = { ...m };
+
+        numericFields.forEach(field => {
+          normalized[field] = parseNumberOrNull(normalized[field]);
+        });
+
+        // If jobs array exists, normalize numeric fields inside jobs too
+        if (Array.isArray(normalized.jobs)) {
+          normalized.jobs = normalized.jobs.map((job: any) => {
+            const jobCopy: any = { ...job };
+            numericFields.forEach(field => {
+              jobCopy[field] = parseNumberOrNull(jobCopy[field]);
+            });
+            // Ensure balance in job
+            if (
+              typeof jobCopy.serviceCharge === 'number' &&
+              typeof jobCopy.paidAmount === 'number'
+            ) {
+              jobCopy.balance = jobCopy.serviceCharge - jobCopy.paidAmount;
+            } else {
+              jobCopy.balance = 0;
+            }
+            return jobCopy;
+          });
+        }
+
+        // Ensure main balance is correct
+        if (
+          typeof normalized.serviceCharge === 'number' &&
+          typeof normalized.paidAmount === 'number'
+        ) {
+          normalized.balance = normalized.serviceCharge - normalized.paidAmount;
+        } else {
+          normalized.balance = 0;
+        }
+
+        // Always include comments (fallback to notes)
+        normalized.comments = normalized.comments || normalized.notes || null;
+
+        return normalized;
       });
 
       const jsonStr = JSON.stringify(exportData, null, 2);

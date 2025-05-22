@@ -13,6 +13,21 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist -r https://github.com/Thollarkings/stitch-scribe-tracker.git -b gh-pages"
   },
+
+  "screenshots": [
+  {
+    "src": "/screenshots/screenshot1-wide.png",
+    "sizes": "1280x720",
+    "type": "image/png",
+    "form_factor": "wide"
+  },
+  {
+    "src": "/screenshots/screenshot2.png",
+    "sizes": "640x1136",
+    "type": "image/png"
+  }
+],
+
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
@@ -74,6 +89,7 @@
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.4.1",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",
@@ -86,6 +102,7 @@
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "vite-plugin-pwa": "^1.0.0"
   }
 }

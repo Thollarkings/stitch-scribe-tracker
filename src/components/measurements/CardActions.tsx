@@ -65,7 +65,7 @@ const CardActions: React.FC<CardActionsProps> = ({
   <Button
     size="sm"
     variant={confirmingDelete ? 'destructive' : 'ghost'}
-    className="bg-white/80 hover:bg-white w-full mb-3"
+    className="bg-white/80 hover:bg-red-600 w-full mb-3"
     onClick={handleDeleteClick}
   >
     <Trash2 className="h-4 w-4 mr-1" />

@@ -13,13 +13,17 @@ const numericFields = [
   'trouserWaist', 'crotch', 'trouserLength', 'thigh', 'waistToKnee', 'calf', 'ankle', 'insideLegSeam'
 ];
 
+const parseNumberOrNull = (value: any) => {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  return isNaN(n) ? null : n;
+};
+
 const ImportFile = ({ onImport }: ImportFileProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    fileInputRef.current?.click();
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,36 +39,57 @@ const ImportFile = ({ onImport }: ImportFileProps) => {
         let importedData = JSON.parse(result);
 
         if (Array.isArray(importedData)) {
-          // Normalize all numeric fields and comments
           importedData = importedData.map((m) => {
             const obj: any = { ...m };
+
             // Normalize comments/notes
             if (!obj.comments && obj.notes) obj.comments = obj.notes;
 
-            // Normalize numeric fields
+            // Parse numeric fields, preserving nulls
             numericFields.forEach(field => {
-              if (obj[field] !== undefined && obj[field] !== null && obj[field] !== '') {
-                obj[field] = Number(obj[field]);
-              }
+              obj[field] = parseNumberOrNull(obj[field]);
             });
 
             // Ensure balance is present and correct
             if (
-              (typeof obj.serviceCharge === 'number' || typeof obj.serviceCharge === 'string') &&
-              (typeof obj.paidAmount === 'number' || typeof obj.paidAmount === 'string')
+              typeof obj.serviceCharge === 'number' &&
+              typeof obj.paidAmount === 'number'
             ) {
-              obj.balance =
-                typeof obj.balance === 'number'
-                  ? obj.balance
-                  : Number(obj.serviceCharge) - Number(obj.paidAmount);
+              obj.balance = obj.serviceCharge - obj.paidAmount;
             } else {
               obj.balance = 0;
+            }
+
+            // If jobs array exists, normalize numeric fields inside jobs too
+            if (Array.isArray(obj.jobs)) {
+              obj.jobs = obj.jobs.map((job: any) => {
+                numericFields.forEach(field => {
+                  job[field] = parseNumberOrNull(job[field]);
+                });
+                if (
+                  typeof job.serviceCharge === 'number' &&
+                  typeof job.paidAmount === 'number'
+                ) {
+                  job.balance = job.serviceCharge - job.paidAmount;
+                } else {
+                  job.balance = 0;
+                }
+                return job;
+              });
             }
 
             return obj;
           });
 
-          await onImport(importedData);
+          // (Optional) Log for debugging
+          // console.log('Normalized import:', importedData);
+
+          const success = await onImport(importedData);
+          if (success) {
+            toast.success('Data imported successfully!');
+          } else {
+            toast.error('Import failed. Please try again.');
+          }
         } else {
           toast.error('Invalid JSON file. Please ensure it contains an array of measurements.');
         }
@@ -92,9 +117,12 @@ const ImportFile = ({ onImport }: ImportFileProps) => {
       />
       <button 
         onClick={handleImportClick} 
-        className="hidden"
+        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         aria-label="Import data"
-      />
+        type="button"
+      >
+        Import Data
+      </button>
     </>
   );
 };

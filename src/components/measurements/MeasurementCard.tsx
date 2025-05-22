@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // <-- Add this
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +47,36 @@ interface MeasurementCardProps {
   onAddJob: (clientId: string, jobData: Job) => Promise<void>;
 }
 
+// --- Date formatting helpers ---
+const formatDate = (dateStr?: string | null) => {
+  if (!dateStr) return 'N/A';
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+const formatDateTime = (dateStr?: string | null) => {
+  if (!dateStr) return 'N/A';
+  const dateObj = new Date(dateStr);
+  return (
+    dateObj.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }) +
+    ', ' +
+    dateObj.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+  );
+};
+
 const MeasurementCard = ({
   measurement,
   index,
@@ -55,7 +85,7 @@ const MeasurementCard = ({
   onAddJob
 }: MeasurementCardProps) => {
   const { toast } = useToast();
-  const navigate = useNavigate(); // <-- Add this
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [jobListOpen, setJobListOpen] = useState(false);
   const [newJobDialogOpen, setNewJobDialogOpen] = useState(false);
@@ -106,23 +136,13 @@ const MeasurementCard = ({
   // Format timestamp
   const timestamp = measurement.timestamp ? new Date(measurement.timestamp) : new Date();
 
-  const formattedDate = timestamp.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const formattedDate = formatDateTime(measurement.timestamp);
 
   const timeAgo = formatDistanceToNow(timestamp, { addSuffix: true });
 
   // Format collection date if available
   const origCollectionDate = measurement.collectionDate
-    ? new Date(measurement.collectionDate).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
+    ? formatDate(measurement.collectionDate)
     : null;
 
   const collectionDateType = measurement.collectionDateType || 'estimated';
@@ -208,10 +228,10 @@ const MeasurementCard = ({
               onServiceInvoiceClick={handleOpenInvoiceDialog}
             />
             <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setJobListOpen(true)}
-            className="bg-white/80 hover:bg-white w-full/2 mb-3">
+              variant="outline" 
+              size="sm" 
+              onClick={() => setJobListOpen(true)}
+              className="bg-white/80 hover:bg-white w-full/2 mb-3">
               View Jobs
             </Button>
           </div>
@@ -219,17 +239,17 @@ const MeasurementCard = ({
       </CardHeader>
 
       <CardContent className="pt-4">
-        <PaymentSummary
+{/*         <PaymentSummary
           serviceCharge={serviceCharge}
           paidAmount={paidAmount}
           balance={balance}
           currency={measurement.serviceChargeCurrency || 'NGN'}
-        />
+        /> */}
 
         <MeasurementDetails measurement={measurement} isOpen={isOpen} onOpenChange={setIsOpen} />
       </CardContent>
 
-      <CardFooter className="text-xs text-muted-foreground pt-0 pb-2 flex flex-wrap gap-2">
+{/*       <CardFooter className="text-xs text-muted-foreground pt-0 pb-2 flex flex-wrap gap-2">
         <span>Recorded: {formattedDate}</span>
         {origCollectionDate && (
           <>
@@ -239,7 +259,7 @@ const MeasurementCard = ({
             </span>
           </>
         )}
-      </CardFooter>
+      </CardFooter> */}
 
       <NewJobDialog
         isOpen={newJobDialogOpen}
@@ -263,10 +283,9 @@ const MeasurementCard = ({
                 <p>
                   <strong>{job.label || `Job ${idx + 1}`}</strong>
                 </p>
-                <p>Recorded Date: {new Date(job.recordedDateTime).toLocaleString()}</p>
+                <p>Recorded Date: {formatDateTime(job.recordedDateTime)}</p>
                 <p>
-                  Collection Date:{' '}
-                  {job.collectionDate ? new Date(job.collectionDate).toLocaleDateString() : 'N/A'}
+                  Collection Date: {formatDate(job.collectionDate)}
                 </p>
                 <p>
                   Service Charge: {job.serviceChargeCurrency}
@@ -319,7 +338,7 @@ const MeasurementCard = ({
               </option>
               {getAllJobs().map((job, idx) => (
                 <option key={idx} value={idx}>
-                  {job.label || `Job ${idx + 1}`} - {new Date(job.recordedDateTime).toLocaleDateString()}
+                  {job.label || `Job ${idx + 1}`} - {formatDate(job.recordedDateTime)}
                 </option>
               ))}
             </select>
