@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,27 @@ const parseNumberOrNull = (value: any) => {
   return isNaN(n) ? null : n;
 };
 
+// Create an initial job object from measurement data
+const createInitialJob = (measurement: any) => {
+  // Only create if we have at least one of these fields
+  if (measurement.serviceCharge || measurement.paidAmount || measurement.collectionDate) {
+    return {
+      serviceCharge: parseNumberOrNull(measurement.serviceCharge) || 0,
+      paidAmount: parseNumberOrNull(measurement.paidAmount) || 0,
+      balance: parseNumberOrNull(measurement.balance) || 0,
+      collectionDateType: measurement.collectionDateType || 'estimated',
+      serviceChargeCurrency: 'NGN',
+      clientId: measurement.id,
+      clientName: measurement.name,
+      timestamp: measurement.timestamp,
+      collectionDate: measurement.collectionDate,
+      recordedDateTime: measurement.timestamp,
+      label: 'Initial Job'
+    };
+  }
+  return null;
+};
+
 const ExportDialog = ({ open, onOpenChange, measurements }: ExportDialogProps) => {
   const [exportFilename, setExportFilename] = useState('tailors_logbook_export');
 
@@ -42,9 +64,19 @@ const ExportDialog = ({ open, onOpenChange, measurements }: ExportDialogProps) =
           normalized[field] = parseNumberOrNull(normalized[field]);
         });
 
-        // If jobs array exists, normalize numeric fields inside jobs too
-        if (Array.isArray(normalized.jobs)) {
-          normalized.jobs = normalized.jobs.map((job: any) => {
+        // Handle jobs array
+        let jobsArray: any[] = [];
+        
+        // First, add the initial job if it doesn't exist in jobs
+        const initialJob = createInitialJob(m);
+        
+        // Process existing jobs
+        if (Array.isArray(m.jobs) && m.jobs.length > 0) {
+          // Check if any job has label 'Initial Job'
+          const hasInitialJob = m.jobs.some((job: any) => job.label === 'Initial Job');
+          
+          // Normalize jobs
+          jobsArray = m.jobs.map((job: any) => {
             const jobCopy: any = { ...job };
             numericFields.forEach(field => {
               jobCopy[field] = parseNumberOrNull(jobCopy[field]);
@@ -60,17 +92,18 @@ const ExportDialog = ({ open, onOpenChange, measurements }: ExportDialogProps) =
             }
             return jobCopy;
           });
+          
+          // Add initial job at the beginning if it doesn't exist and is valid
+          if (!hasInitialJob && initialJob) {
+            jobsArray.unshift(initialJob);
+          }
+        } else if (initialJob) {
+          // If there are no jobs but we have initial job data, add it
+          jobsArray = [initialJob];
         }
-
-        // Ensure main balance is correct
-        if (
-          typeof normalized.serviceCharge === 'number' &&
-          typeof normalized.paidAmount === 'number'
-        ) {
-          normalized.balance = normalized.serviceCharge - normalized.paidAmount;
-        } else {
-          normalized.balance = 0;
-        }
+        
+        // Set the processed jobs array
+        normalized.jobs = jobsArray.length > 0 ? jobsArray : null;
 
         // Always include comments (fallback to notes)
         normalized.comments = normalized.comments || normalized.notes || null;

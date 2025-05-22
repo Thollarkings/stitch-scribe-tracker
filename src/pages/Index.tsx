@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,19 @@ import ImportFile from '@/components/measurements/ImportFile';
 import { useMeasurements } from '@/hooks/useMeasurements';
 import { useRef } from 'react';
 import { toast } from 'sonner';
+
+interface Job {
+  serviceCharge: number;
+  paidAmount: number;
+  balance: number;
+  collectionDateType: 'estimated' | 'exact';
+  serviceChargeCurrency: string;
+  clientId: string;
+  clientName: string;
+  timestamp: string;
+  collectionDate: string | null;
+  recordedDateTime: string;
+}
 
 const Index = () => {
   const { 
@@ -74,7 +88,7 @@ const Index = () => {
     }
   };
 
-  const handleAddJob = (clientId: string, jobData: any) => {
+  const handleAddJob = async (clientId: string, jobData: Job): Promise<void> => {
     // Find the measurement to update
     const measurementIndex = measurements.findIndex(m => m.id === clientId);
     
@@ -82,7 +96,6 @@ const Index = () => {
       const measurement = measurements[measurementIndex];
       
       // Create updated measurement with the new job
-      // Ensure job data has numeric fields as numbers, not strings
       const updatedMeasurement = {
         ...measurement,
         jobs: Array.isArray(measurement.jobs) 
@@ -91,8 +104,10 @@ const Index = () => {
       };
       
       // Save the updated measurement
-      saveMeasurement(updatedMeasurement, true);
-      toast.success(`Added new job for ${jobData.clientName}`);
+      const success = await saveMeasurement(updatedMeasurement, true);
+      if (success) {
+        toast.success(`Added new job for ${jobData.clientName}`);
+      }
     } else {
       toast.error("Could not find measurement to add job to");
     }

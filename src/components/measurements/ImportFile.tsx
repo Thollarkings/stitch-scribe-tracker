@@ -19,6 +19,28 @@ const parseNumberOrNull = (value: any) => {
   return isNaN(n) ? null : n;
 };
 
+// Extract initial job data from a measurement or from the jobs array
+const extractInitialJobData = (measurement: any) => {
+  // First check if there's an initial job in the jobs array
+  if (Array.isArray(measurement.jobs) && measurement.jobs.length > 0) {
+    const initialJob = measurement.jobs.find((job: any) => job.label === 'Initial Job');
+    if (initialJob) {
+      // Copy data from initial job to measurement
+      return {
+        ...measurement,
+        serviceCharge: initialJob.serviceCharge,
+        paidAmount: initialJob.paidAmount,
+        balance: initialJob.balance,
+        collectionDate: initialJob.collectionDate || measurement.collectionDate,
+        collectionDateType: initialJob.collectionDateType || 'estimated'
+      };
+    }
+  }
+  
+  // If no initial job was found in the array, keep the existing data
+  return measurement;
+};
+
 const ImportFile = ({ onImport }: ImportFileProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -39,11 +61,14 @@ const ImportFile = ({ onImport }: ImportFileProps) => {
         let importedData = JSON.parse(result);
 
         if (Array.isArray(importedData)) {
-          importedData = importedData.map((m) => {
-            const obj: any = { ...m };
+          importedData = importedData.map((measurement) => {
+            const obj: any = { ...measurement };
 
             // Normalize comments/notes
             if (!obj.comments && obj.notes) obj.comments = obj.notes;
+
+            // Process initial job data if available
+            obj = extractInitialJobData(obj);
 
             // Parse numeric fields, preserving nulls
             numericFields.forEach(field => {
@@ -63,18 +88,19 @@ const ImportFile = ({ onImport }: ImportFileProps) => {
             // If jobs array exists, normalize numeric fields inside jobs too
             if (Array.isArray(obj.jobs)) {
               obj.jobs = obj.jobs.map((job: any) => {
+                const jobCopy = { ...job };
                 numericFields.forEach(field => {
-                  job[field] = parseNumberOrNull(job[field]);
+                  jobCopy[field] = parseNumberOrNull(jobCopy[field]);
                 });
                 if (
-                  typeof job.serviceCharge === 'number' &&
-                  typeof job.paidAmount === 'number'
+                  typeof jobCopy.serviceCharge === 'number' &&
+                  typeof jobCopy.paidAmount === 'number'
                 ) {
-                  job.balance = job.serviceCharge - job.paidAmount;
+                  jobCopy.balance = jobCopy.serviceCharge - jobCopy.paidAmount;
                 } else {
-                  job.balance = 0;
+                  jobCopy.balance = 0;
                 }
-                return job;
+                return jobCopy;
               });
             }
 
@@ -82,7 +108,7 @@ const ImportFile = ({ onImport }: ImportFileProps) => {
           });
 
           // (Optional) Log for debugging
-          // console.log('Normalized import:', importedData);
+          console.log('Normalized import data:', importedData);
 
           const success = await onImport(importedData);
           if (success) {

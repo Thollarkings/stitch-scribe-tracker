@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { 
   AlertDialog, 
@@ -14,13 +15,26 @@ import { Button } from '@/components/ui/button';
 import { Trash2, Edit } from 'lucide-react';
 import MeasurementCard from './MeasurementCard';
 
+interface Job {
+  serviceCharge: number;
+  paidAmount: number;
+  balance: number;
+  collectionDateType: 'estimated' | 'exact';
+  serviceChargeCurrency: string;
+  clientId: string;
+  clientName: string;
+  timestamp: string;
+  collectionDate: string | null;
+  recordedDateTime: string;
+}
+
 interface MeasurementsListProps {
   measurements: any[];
   onDelete: (index: number) => void;
   handleEdit: (index: number) => void;
   searchTerm: string;
   isLoading?: boolean;
-  onAddJob?: (clientId: string, jobData: any) => void;
+  onAddJob?: (clientId: string, jobData: Job) => Promise<void>;
 }
 
 const MeasurementsList = ({ 
@@ -31,8 +45,6 @@ const MeasurementsList = ({
   isLoading = false,
   onAddJob
 }: MeasurementsListProps) => {
-  console.log(measurements); // in MeasurementsList before rendering MeasurementCard
-
   return (
     <div className="space-y-4 p-4">
       {/* Header with title and client count */}
@@ -72,7 +84,7 @@ const MeasurementsList = ({
               index={index}
               onDelete={onDelete}
               handleEdit={handleEdit}
-              onAddJob={onAddJob}
+              onAddJob={onAddJob || (() => Promise.resolve())}
             />
           ))}
         </>

@@ -55,9 +55,13 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
   const { toast } = useToast();
   const [collectionDate, setCollectionDate] = useState<Date | undefined>(undefined);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [jobData, setJobData] = useState<Omit<JobData, 
-    'clientId' | 'clientName' | 'timestamp' | 'recordedDateTime' | 'balance'
-  > & { balance: string }>({
+  const [jobData, setJobData] = useState<{
+    serviceCharge: string;
+    paidAmount: string; 
+    balance: string; 
+    collectionDateType: 'estimated' | 'exact';
+    serviceChargeCurrency: string;
+  }>({
     serviceCharge: '',
     paidAmount: '', 
     balance: '', 
@@ -88,10 +92,15 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
     if (!validateForm()) return;
 
     try {
-      const numericData = {
-        serviceCharge: Number(jobData.serviceCharge),
-        paidAmount: Number(jobData.paidAmount || '0'),
-        balance: Number(jobData.balance || '0'),
+      // Convert string values to numbers
+      const serviceCharge = Number(jobData.serviceCharge);
+      const paidAmount = Number(jobData.paidAmount || '0');
+      const balance = serviceCharge - paidAmount;
+
+      const numericData: JobData = {
+        serviceCharge: serviceCharge,
+        paidAmount: paidAmount,
+        balance: balance,
         collectionDateType: jobData.collectionDateType,
         serviceChargeCurrency: jobData.serviceChargeCurrency,
         clientId,
