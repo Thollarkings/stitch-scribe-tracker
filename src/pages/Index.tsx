@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/layout/Navbar';
@@ -9,7 +9,6 @@ import MeasurementsList from '@/components/measurements/MeasurementsList';
 import ExportDialog from '@/components/measurements/ExportDialog';
 import ImportFile from '@/components/measurements/ImportFile';
 import { useMeasurements } from '@/hooks/useMeasurements';
-import { useRef } from 'react';
 import { toast } from 'sonner';
 
 interface Job {
@@ -113,6 +112,15 @@ const Index = () => {
     }
   };
 
+  const handleUpdateMeasurement = async (updatedMeasurement: any): Promise<void> => {
+    const success = await saveMeasurement(updatedMeasurement, true);
+    if (success) {
+      toast.success(`Updated job for ${updatedMeasurement.name}`);
+    } else {
+      toast.error("Failed to update measurement");
+    }
+  };
+
   const filteredMeasurements = measurements.filter(measurement =>
     measurement.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -151,6 +159,7 @@ const Index = () => {
               searchTerm={searchTerm}
               isLoading={isLoading}
               onAddJob={handleAddJob}
+              onUpdateMeasurement={handleUpdateMeasurement}
             />
           </CardContent>
         </Card>

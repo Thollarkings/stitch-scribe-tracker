@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
@@ -7,6 +8,7 @@ import PaymentSummary from './PaymentSummary';
 import MeasurementDetails from './MeasurementDetails';
 import CardActions from './CardActions';
 import NewJobDialog from './NewJobDialog';
+import JobsList from './JobsList';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -45,6 +47,7 @@ interface MeasurementCardProps {
   onDelete: (index: number) => void;
   handleEdit: (index: number) => void;
   onAddJob: (clientId: string, jobData: Job) => Promise<void>;
+  onUpdateMeasurement?: (updatedMeasurement: any) => void;
 }
 
 // --- Date formatting helpers ---
@@ -82,7 +85,8 @@ const MeasurementCard = ({
   index,
   onDelete,
   handleEdit,
-  onAddJob
+  onAddJob,
+  onUpdateMeasurement
 }: MeasurementCardProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -204,6 +208,12 @@ const MeasurementCard = ({
     // Navigate to invoice page, passing job details in state
     navigate(`/invoice/${measurement.id}`, { state: { job } });
   };
+  
+  const handleUpdateMeasurement = (updatedMeasurement: any) => {
+    if (onUpdateMeasurement) {
+      onUpdateMeasurement(updatedMeasurement);
+    }
+  };
 
   return (
     <Card className="mb-10 border-l-4 border-l-tailor-gold overflow-hidden animate-fade-in shadow-2xl">
@@ -227,39 +237,20 @@ const MeasurementCard = ({
               onNewJobClick={() => setNewJobDialogOpen(true)}
               onServiceInvoiceClick={handleOpenInvoiceDialog}
             />
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setJobListOpen(true)}
-              className="bg-white/80 hover:bg-white w-full/2 mb-3">
-              View Jobs
-            </Button>
+            <JobsList 
+              measurement={measurement} 
+              currency={measurement.serviceChargeCurrency || 'NGN'} 
+              isOpen={jobListOpen} 
+              onOpenChange={setJobListOpen}
+              onUpdateMeasurement={handleUpdateMeasurement} 
+            />
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="pt-4">
-{/*         <PaymentSummary
-          serviceCharge={serviceCharge}
-          paidAmount={paidAmount}
-          balance={balance}
-          currency={measurement.serviceChargeCurrency || 'NGN'}
-        /> */}
-
         <MeasurementDetails measurement={measurement} isOpen={isOpen} onOpenChange={setIsOpen} />
       </CardContent>
-
-{/*       <CardFooter className="text-xs text-muted-foreground pt-0 pb-2 flex flex-wrap gap-2">
-        <span>Recorded: {formattedDate}</span>
-        {origCollectionDate && (
-          <>
-            <span className="text-muted-foreground">•</span>
-            <span>
-              ({collectionDateType === 'exact' ? 'Exact' : 'Estimated'}) Collection Date: {origCollectionDate}
-            </span>
-          </>
-        )}
-      </CardFooter> */}
 
       <NewJobDialog
         isOpen={newJobDialogOpen}
@@ -270,52 +261,6 @@ const MeasurementCard = ({
         onSubmit={handleNewJob}
         isSubmitting={isSubmitting}
       />
-
-      {/* Job List Modal */}
-      <Dialog open={jobListOpen} onOpenChange={setJobListOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Job List for {measurement.name}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {getAllJobs().map((job, idx) => (
-              <div key={idx} className="p-3 border rounded shadow-sm">
-                <p>
-                  <strong>{job.label || `Job ${idx + 1}`}</strong>
-                </p>
-                <p>Recorded Date: {formatDateTime(job.recordedDateTime)}</p>
-                <p>
-                  Collection Date: {formatDate(job.collectionDate)}
-                </p>
-                <p>
-                  Service Charge: {job.serviceChargeCurrency}
-                  {job.serviceCharge.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-                <p>
-                  Paid Amount: {job.serviceChargeCurrency}
-                  {job.paidAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-                <p>
-                  Balance: {job.serviceChargeCurrency}
-                  {job.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Total Paid Amount */}
-          <div className="p-3 mt-4 border-t font-semibold text-right">
-            Total Paid Amount: {measurement.serviceChargeCurrency || 'NGN'}{' '}
-            {getTotalPaidAmount().toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-
-          <DialogClose asChild>
-            <Button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-              Close
-            </Button>
-          </DialogClose>
-        </DialogContent>
-      </Dialog>
 
       {/* Invoice Selection Dialog */}
       <Dialog open={invoiceDialogOpen} onOpenChange={setInvoiceDialogOpen}>
