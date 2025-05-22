@@ -68,7 +68,7 @@ const MeasurementDetails: React.FC<MeasurementDetailsProps> = ({
 
   return (
     <Collapsible open={isOpen} onOpenChange={onOpenChange} className="w-full">
-      <CollapsibleTrigger className="flex w-full justify-between items-center rounded-md p-2 hover:bg-muted text-sm font-medium">
+      <CollapsibleTrigger className="flex w-full justify-between items-center rounded-md p-2 hover:bg-gray-200 text-lg-blue-700 font-medium">
         View Client's Measurements
         <ChevronDown
           className={`h-4 w-4 transition-transform ${
@@ -86,21 +86,21 @@ const MeasurementDetails: React.FC<MeasurementDetailsProps> = ({
 
           return (
             <div key={`section-${idx}`} className="mb-4">
-              <h4 className="text-sm font-medium mb-2 text-muted-foreground">
+              <h4 className="text-sm font-bold mb-2 text-indigo-800">
                 {section.label} Measurements
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                 {section.items.map(
                   (item) =>
                     measurement[item.key] && (
                       <div
                         key={item.key}
-                        className="flex justify-between p-1.5 border rounded border-border/60"
+                        className="flex justify-between p-1.5 rounded border-border/60"
                       >
-                        <span className="text-muted-foreground">
+                        <span className="text-gray-500">
                           {item.label}:
                         </span>
-                        <span className="font-medium">
+                        <span className="text-lg font-bold text-green-700">
                           {measurement[item.key]}
                         </span>
                       </div>
@@ -116,7 +116,7 @@ const MeasurementDetails: React.FC<MeasurementDetailsProps> = ({
 
         {measurement.comments && (
           <div className="mt-4">
-            <h4 className="text-sm font-medium mb-2 text-muted-foreground">
+            <h4 className="text-sm font-bold mb-2 text-indigo-800">
               Additional Comments
             </h4>
             <p className="text-sm whitespace-pre-wrap p-2 border rounded border-border/60">
