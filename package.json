@@ -13,22 +13,22 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist -r https://github.com/Thollarkings/stitch-scribe-tracker.git -b gh-pages"
   },
-
   "screenshots": [
-  {
-    "src": "/screenshots/screenshot1-wide.png",
-    "sizes": "1280x720",
-    "type": "image/png",
-    "form_factor": "wide"
-  },
-  {
-    "src": "/screenshots/screenshot2.png",
-    "sizes": "640x1136",
-    "type": "image/png"
-  }
-],
-
+    {
+      "src": "/screenshots/screenshot1-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/screenshot2.png",
+      "sizes": "640x1136",
+      "type": "image/png"
+    }
+  ],
   "dependencies": {
+    "@capacitor/cli": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
