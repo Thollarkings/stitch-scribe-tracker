@@ -29,6 +29,7 @@ const extractInitialJobData = (measurement: any) => {
       // Copy data from initial job to measurement
       return {
         ...measurement,
+        description: initialJob.description, // Include job description
         serviceCharge: initialJob.serviceCharge,
         paidAmount: initialJob.paidAmount,
         balance: initialJob.balance,
@@ -93,6 +94,9 @@ const ImportFile = ({ onImport }: ImportFileProps) => {
             if (Array.isArray(processedMeasurement.jobs)) {
               processedMeasurement.jobs = processedMeasurement.jobs.map((job: any) => {
                 const jobCopy = { ...job };
+                // Ensure description field is preserved
+                jobCopy.description = job.description || '';
+                
                 numericFields.forEach(field => {
                   jobCopy[field] = parseNumberOrNull(jobCopy[field]);
                 });

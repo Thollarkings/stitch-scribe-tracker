@@ -8,6 +8,7 @@ import { getCurrencySymbol } from '@/utils/formatters';
 
 interface Job {
   label?: string;
+  description?: string; // Added job description field
   recordedDateTime?: string;
   collectionDate?: string | null;
   collectionDateType?: string;
@@ -29,6 +30,7 @@ interface JobsListProps {
 const getAllJobs = (measurement: any, currency: string): Job[] => {
   const initialJob: Job = {
     label: 'Initial Job',
+    description: measurement.description || '', // Added job description field
     recordedDateTime: measurement.timestamp,
     collectionDate: measurement.collectionDate,
     collectionDateType: measurement.collectionDateType,
@@ -53,14 +55,18 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
       acc + (typeof job.paidAmount === 'number' ? job.paidAmount : parseFloat(String(job.paidAmount || '0'))), 0);
   };
 
-  const formatDate = (dateStr: string | undefined | null) => {
+  const formatDate = (dateStr: string | undefined | null, type: string | undefined) => {
     if (!dateStr) return 'N/A';
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    
+    const formattedDate = new Date(dateStr).toLocaleDateString('en-US', {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
+    
+    // Add the collection date type in parentheses before the date
+    return type ? `(${type}) ${formattedDate}` : formattedDate;
   };
 
   const formatDateTime = (dateStr: string | undefined | null) => {
@@ -118,6 +124,7 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
       // Initial job: update top-level measurement fields only
       const updatedMeasurement = {
         ...measurement,
+        description: editForm.description, // Include job description in updates
         collectionDateType: editForm.collectionDateType,
         collectionDate: editForm.collectionDate,
         serviceCharge: editForm.serviceCharge,
@@ -130,6 +137,7 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
       const updatedJobs = [...(measurement.jobs || [])];
       updatedJobs[editingJobIndex - 1] = {
         ...updatedJobs[editingJobIndex - 1],
+        description: editForm.description, // Include job description in updates
         collectionDateType: editForm.collectionDateType,
         collectionDate: editForm.collectionDate,
         serviceCharge: editForm.serviceCharge,
@@ -149,6 +157,7 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
       // Initial job: clear only job-related fields on measurement
       const clearedMeasurement = {
         ...measurement,
+        description: '', // Clear job description
         collectionDateType: null,
         collectionDate: null,
         serviceCharge: 0,
@@ -194,6 +203,17 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
                     </div>
                   )}
                 </div>
+                
+                {/* Display job description if available */}
+                {job.description && (
+                  <div className="mt-1">
+                    <span className="text-muted-foreground">Description:</span>
+                    <span className="ml-1">
+                      {job.description}
+                    </span>
+                  </div>
+                )}
+                
                 <div className="mt-1">
                   <div>
                     <span className="text-muted-foreground">Recorded Date:</span>
@@ -204,7 +224,7 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
                   <div>
                     <span className="text-muted-foreground">Collection Date:</span>
                     <span className="ml-1">
-                      {formatDate(job.collectionDate)}
+                      {formatDate(job.collectionDate, job.collectionDateType)}
                     </span>
                   </div>
                   <div>
@@ -253,6 +273,17 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
             <DialogTitle>Edit Job - {editingJobIndex === 0 ? 'Initial Job' : `Job #${editingJobIndex}`}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Add Job Description field to the edit form */}
+            <div>
+              <label className="block mb-1 text-sm font-medium">Job Description</label>
+              <input
+                type="text"
+                value={editForm.description || ''}
+                onChange={e => onChangeField('description', e.target.value)}
+                placeholder="Enter job description"
+                className="w-full border rounded p-2"
+              />
+            </div>
             <div>
               <label className="block mb-1 text-sm font-medium">Collection Date Type</label>
               <select

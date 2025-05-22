@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { useMeasurements } from '@/hooks/useMeasurements';
 import { toast } from 'sonner';
 
 interface Job {
+  description?: string; // Add job description field
   serviceCharge: number;
   paidAmount: number;
   balance: number;

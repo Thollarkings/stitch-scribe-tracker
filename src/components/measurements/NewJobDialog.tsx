@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ import { getCurrencySymbol } from '@/utils/formatters';
 import { useToast } from '@/components/ui/use-toast';
 
 interface JobData {
+  description?: string; // Added job description field
   serviceCharge: number;
   paidAmount: number;
   balance: number;
@@ -56,12 +58,14 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
   const [collectionDate, setCollectionDate] = useState<Date | undefined>(undefined);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [jobData, setJobData] = useState<{
+    description: string;
     serviceCharge: string;
     paidAmount: string; 
     balance: string; 
     collectionDateType: 'estimated' | 'exact';
     serviceChargeCurrency: string;
   }>({
+    description: '',
     serviceCharge: '',
     paidAmount: '', 
     balance: '', 
@@ -98,6 +102,7 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
       const balance = serviceCharge - paidAmount;
 
       const numericData: JobData = {
+        description: jobData.description, // Include job description
         serviceCharge: serviceCharge,
         paidAmount: paidAmount,
         balance: balance,
@@ -125,6 +130,7 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
   const resetForm = () => {
     setCollectionDate(undefined);
     setJobData({
+      description: '',
       serviceCharge: '',
       paidAmount: '',
       balance: '',
@@ -165,6 +171,20 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
+          {/* Job Description - New field */}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="job-description" className="col-span-4">
+              Job Description
+            </Label>
+            <Input
+              id="job-description"
+              className="col-span-4"
+              value={jobData.description}
+              onChange={(e) => setJobData({...jobData, description: e.target.value})}
+              placeholder="Enter job description"
+            />
+          </div>
+
           {/* Collection Date Type */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="collection-date-type" className="col-span-4">

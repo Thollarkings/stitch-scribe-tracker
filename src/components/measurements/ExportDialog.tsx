@@ -32,6 +32,7 @@ const createInitialJob = (measurement: any) => {
   // Only create if we have at least one of these fields
   if (measurement.serviceCharge || measurement.paidAmount || measurement.collectionDate) {
     return {
+      description: measurement.description || '', // Include job description
       serviceCharge: parseNumberOrNull(measurement.serviceCharge) || 0,
       paidAmount: parseNumberOrNull(measurement.paidAmount) || 0,
       balance: parseNumberOrNull(measurement.balance) || 0,
@@ -78,6 +79,9 @@ const ExportDialog = ({ open, onOpenChange, measurements }: ExportDialogProps) =
           // Normalize jobs
           jobsArray = m.jobs.map((job: any) => {
             const jobCopy: any = { ...job };
+            // Preserve description field
+            jobCopy.description = job.description || '';
+            
             numericFields.forEach(field => {
               jobCopy[field] = parseNumberOrNull(jobCopy[field]);
             });
