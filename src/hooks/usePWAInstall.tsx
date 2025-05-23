@@ -1,55 +1,39 @@
-
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
+import { useState, useEffect } from 'react';
 
 export const usePWAInstall = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isInstallable, setIsInstallable] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [hasShownPrompt, setHasShownPrompt] = useState(false);
 
-  // Device detection
   useEffect(() => {
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
-    const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || 
-                            (window.navigator as any).standalone === true;
+    // Check if app is running in standalone mode
+    const checkStandalone = () => {
+      return window.matchMedia('(display-mode: standalone)').matches || 
+             ('standalone' in window.navigator && (window.navigator as any).standalone);
+    };
 
-    setIsIOS(isIOSDevice);
-    setIsMobile(isMobileDevice);
-    setIsStandalone(isStandaloneMode);
+    // Check device type
+    const checkDevice = () => {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+      setIsMobile(/android|iphone|ipad|ipod/.test(userAgent));
+    };
 
-    console.log('Device detection:', { 
-      isIOSDevice, 
-      isMobileDevice, 
-      isStandaloneMode,
-      userAgent: userAgent.substring(0, 50) + '...'
-    });
-  }, []);
+    setIsStandalone(checkStandalone());
+    checkDevice();
 
-  // Handle beforeinstallprompt event
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('beforeinstallprompt event fired');
+    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
-      const promptEvent = e as BeforeInstallPromptEvent;
-      setDeferredPrompt(promptEvent);
+      setDeferredPrompt(e);
       setIsInstallable(true);
     };
 
     const handleAppInstalled = () => {
-      console.log('PWA was installed');
+      setIsStandalone(true);
       setDeferredPrompt(null);
       setIsInstallable(false);
-      toast.success('App installed successfully!');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -61,104 +45,43 @@ export const usePWAInstall = () => {
     };
   }, []);
 
-  // Auto-prompt logic
-  useEffect(() => {
-    if (!hasShownPrompt && !isStandalone && isMobile) {
-      console.log('Checking if we should show install prompt');
-      
-      // For Android devices with deferredPrompt
-      if (deferredPrompt && !isIOS) {
-        console.log('Showing Android install prompt');
-        setTimeout(() => {
-          showInstallPrompt();
-        }, 2000); // 2 second delay
-      }
-      // For iOS devices
-      else if (isIOS) {
-        console.log('Showing iOS install instructions');
-        setTimeout(() => {
-          showIOSInstructions();
-        }, 3000); // 3 second delay for iOS
-      }
-      // For other mobile browsers that might support PWA
-      else if (isMobile) {
-        console.log('Mobile device detected, waiting for beforeinstallprompt');
-        // Set a timeout to show iOS-style instructions if no prompt appears
-        setTimeout(() => {
-          if (!deferredPrompt && !hasShownPrompt) {
-            console.log('No native prompt available, showing manual instructions');
-            showManualInstallInstructions();
-          }
-        }, 5000);
-      }
-    }
-  }, [deferredPrompt, isStandalone, isMobile, isIOS, hasShownPrompt]);
-
-  const showInstallPrompt = useCallback(async () => {
+  const showInstallPrompt = async (): Promise<boolean> => {
     if (!deferredPrompt) return false;
-
-    setHasShownPrompt(true);
     
     try {
-      await deferredPrompt.prompt();
+      deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      
-      console.log('User choice:', outcome);
-      
-      if (outcome === 'accepted') {
-        toast.success('Thanks for installing StitchScribe!');
-      } else {
-        toast('You can install the app anytime from your browser menu', {
-          duration: 5000,
-        });
-      }
-      
-      setDeferredPrompt(null);
-      setIsInstallable(false);
       return outcome === 'accepted';
     } catch (error) {
-      console.error('Error showing install prompt:', error);
+      console.error('Install prompt failed:', error);
       return false;
     }
-  }, [deferredPrompt]);
+  };
 
-  const showIOSInstructions = useCallback(() => {
-    setHasShownPrompt(true);
-    toast('Install StitchScribe App', {
-      description: 'Tap the Share button, then "Add to Home Screen" to install',
-      duration: 10000,
-      action: {
-        label: 'Got it',
-        onClick: () => {
-          console.log('iOS instructions acknowledged');
-        },
-      },
-    });
-  }, []);
+  const showIOSInstructions = () => {
+    alert('To install this app on iOS, tap the Share button and select "Add to Home Screen".');
+  };
 
-  const showManualInstallInstructions = useCallback(() => {
-    setHasShownPrompt(true);
-    toast('Install StitchScribe App', {
-      description: 'Look for "Add to Home Screen" or "Install" in your browser menu',
-      duration: 8000,
-      action: {
-        label: 'Understood',
-        onClick: () => {
-          console.log('Manual instructions acknowledged');
-        },
-      },
-    });
-  }, []);
+  const showManualInstallInstructions = () => {
+    alert('Your browser doesn\'t support direct installation. Please check your browser settings to add this app to your home screen.');
+  };
 
   return {
     isInstallable,
     isStandalone,
     isIOS,
     isMobile,
-    deferredPrompt,
     showInstallPrompt,
     showIOSInstructions,
-    showManualInstallInstructions,
-    hasShownPrompt,
+    showManualInstallInstructions
   };
 };
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
