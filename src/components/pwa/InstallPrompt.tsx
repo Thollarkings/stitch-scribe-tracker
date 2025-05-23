@@ -101,7 +101,7 @@ const InstallPrompt = ({ variant = 'button', className = '' }: InstallPromptProp
   if (variant === 'banner') {
     return (
       <div className={`bg-tailor-gold/10 border border-tailor-gold/20 rounded-lg p-4 relative ${className}`}>
-        <button 
+        {/* <button 
           onClick={handleClose}
           className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200/50 transition-colors"
           aria-label="Close install prompt"
@@ -123,7 +123,7 @@ const InstallPrompt = ({ variant = 'button', className = '' }: InstallPromptProp
             <Download className="h-4 w-4 mr-1" />
             Install
           </Button>
-        </div>
+        </div> */}
       </div>
     );
   }
