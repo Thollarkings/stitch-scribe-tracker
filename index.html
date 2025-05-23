@@ -27,6 +27,13 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#317EFB" />
+    <link rel="manifest" href="/stitch-scribe-tracker/assets/manifest-qXp3SOFp.json">
+    <meta name="theme-color" content="#3F9D52">
+<link rel="icon" type="image/png" href="/stitch-scribe-tracker/assets/favicon-96x96-CWAv1DP-.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/stitch-scribe-tracker/assets/favicon-s6RdLQka.svg" />
+<link rel="shortcut icon" href="/stitch-scribe-tracker/assets/favicon-DFVCli51.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/stitch-scribe-tracker/assets/apple-touch-icon-fh0rD9Sp.png" />
+<link rel="manifest" href="/stitch-scribe-tracker/assets/site-GW1wQ-WU.webmanifest" />
 
     <!-- Apple Touch Icons and Meta -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -44,4 +51,50 @@
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
   </body>
+  <script>
+ if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js")
+      .then(reg => console.log("Service Worker registered ✅"))
+      .catch(err => console.error("Service Worker error ❌", err));
+  }
+
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  deferredPrompt = event;
+  document.getElementById('installBtn').style.display = 'block';
+});
+
+document.getElementById('installBtn').addEventListener('click', () => {
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      console.log('PWA installed');
+    }
+    deferredPrompt = null;
+  });
+});
+
+
+ </script>
+  <script>
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      document.getElementById("installBtn").style.display = "none";
+    }
+  </script>
+  <style>
+    #installBtn {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #317EFB;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+  <button id="installBtn">Install App</button>
 </html>

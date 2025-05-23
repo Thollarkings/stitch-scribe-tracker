@@ -1,0 +1,23 @@
+{
+  "name": "TailorSuite",
+  "short_name": "TailorSuite",
+  "start_url": "/",
+  "display": "fullscreen",
+  "scope": "/",
+  "description": "TailorSuite is a complete toolset that simplifies tailoring by managing measurements, tracking progress and clients, and generating invoices with your custom logo—all you need for a perfect fit.",
+  "background_color": "#ffffff",
+  "theme_color": "#3F9D52",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "public/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "public/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
