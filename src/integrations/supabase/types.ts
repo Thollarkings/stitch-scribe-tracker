@@ -22,6 +22,7 @@ export type Database = {
           comments: string | null
           crotch: number | null
           delivery_date: string | null
+          description: string | null
           email: string | null
           gender: string | null
           gownLength: number | null
@@ -72,6 +73,7 @@ export type Database = {
           comments?: string | null
           crotch?: number | null
           delivery_date?: string | null
+          description?: string | null
           email?: string | null
           gender?: string | null
           gownLength?: number | null
@@ -122,6 +124,7 @@ export type Database = {
           comments?: string | null
           crotch?: number | null
           delivery_date?: string | null
+          description?: string | null
           email?: string | null
           gender?: string | null
           gownLength?: number | null

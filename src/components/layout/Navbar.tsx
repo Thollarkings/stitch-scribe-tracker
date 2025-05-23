@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import UserMenu from './UserMenu';
+import InstallPrompt from '../pwa/InstallPrompt';
 
 interface NavbarProps {
   searchTerm: string;
@@ -43,6 +44,8 @@ const Navbar = ({ searchTerm, setSearchTerm, toggleForm, formVisible }: NavbarPr
                 />
               </div>
               
+              <InstallPrompt className="hidden md:flex" />
+              
               <Button 
                 onClick={toggleForm}
                 className="bg-tailor-gold text-tailor-navy hover:bg-tailor-gold/90 flex items-center gap-1"
@@ -53,6 +56,11 @@ const Navbar = ({ searchTerm, setSearchTerm, toggleForm, formVisible }: NavbarPr
               
               <UserMenu />
             </div>
+          </div>
+          
+          {/* Mobile install prompt */}
+          <div className="md:hidden mt-4">
+            <InstallPrompt variant="banner" />
           </div>
         </div>
       </div>
