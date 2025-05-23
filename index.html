@@ -27,13 +27,13 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#317EFB" />
-    <link rel="manifest" href="/stitch-scribe-tracker/assets/manifest-qXp3SOFp.json">
+    <link rel="manifest" href="/assets/manifest-qXp3SOFp.json">
     <meta name="theme-color" content="#3F9D52">
-<link rel="icon" type="image/png" href="/stitch-scribe-tracker/assets/favicon-96x96-CWAv1DP-.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="/stitch-scribe-tracker/assets/favicon-s6RdLQka.svg" />
-<link rel="shortcut icon" href="/stitch-scribe-tracker/assets/favicon-DFVCli51.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="/stitch-scribe-tracker/assets/apple-touch-icon-fh0rD9Sp.png" />
-<link rel="manifest" href="/stitch-scribe-tracker/assets/site-GW1wQ-WU.webmanifest" />
+<link rel="icon" type="image/png" href="/assets/favicon-96x96-CWAv1DP-.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/assets/favicon-s6RdLQka.svg" />
+<link rel="shortcut icon" href="/assets/favicon-DFVCli51.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon-fh0rD9Sp.png" />
+<link rel="manifest" href="/assets/site-GW1wQ-WU.webmanifest" />
 
     <!-- Apple Touch Icons and Meta -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -42,14 +42,18 @@
     <link rel="manifest" href="/stitch-scribe-tracker/manifest.webmanifest" />
 <meta name="theme-color" content="#317EFB" />
 
-    <script type="module" crossorigin src="/stitch-scribe-tracker/assets/index-BPY3geQJ.js"></script>
-    <link rel="stylesheet" crossorigin href="/stitch-scribe-tracker/assets/index-B4Nhg2EN.css">
-  <link rel="manifest" href="/stitch-scribe-tracker/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/stitch-scribe-tracker/registerSW.js"></script></head>
+    <script type="module" crossorigin src="/assets/index-CTbrhbpk.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B4Nhg2EN.css">
+  <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
 
   <body>
     <div id="root"></div>
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <div id="installPrompt" style="display:none; position:fixed; bottom:20px; left:20px; background:#0d47a1; color:#fff; padding:15px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.3); z-index:9999;">
+  <p style="margin:0 0 10px;">Install TailorSuite on your device?</p>
+  <button onclick="installApp()" style="padding:8px 12px; background:#fff; color:#0d47a1; border:none; border-radius:5px;">Install</button>
+</div>
   </body>
   <script>
  if ("serviceWorker" in navigator) {
@@ -57,15 +61,12 @@
       .then(reg => console.log("Service Worker registered ✅"))
       .catch(err => console.error("Service Worker error ❌", err));
   }
-
-
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', event => {
   event.preventDefault();
   deferredPrompt = event;
   document.getElementById('installBtn').style.display = 'block';
 });
-
 document.getElementById('installBtn').addEventListener('click', () => {
   deferredPrompt.prompt();
   deferredPrompt.userChoice.then(choice => {
@@ -75,9 +76,34 @@ document.getElementById('installBtn').addEventListener('click', () => {
     deferredPrompt = null;
   });
 });
-
-
  </script>
+ <script>
+  let deferredPrompt;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent automatic prompt
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // Show your custom install button or popup
+    document.getElementById("installPrompt").style.display = "block";
+  });
+
+  function installApp() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        deferredPrompt = null;
+        document.getElementById("installPrompt").style.display = "none";
+      });
+    }
+  }
+</script>
   <script>
     if (window.matchMedia("(display-mode: standalone)").matches) {
       document.getElementById("installBtn").style.display = "none";
