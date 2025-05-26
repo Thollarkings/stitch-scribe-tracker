@@ -84,35 +84,23 @@ const Auth = () => {
   };
 
   return (
-  <div className="min-h-screen h-screen flex flex-col bg-gradient-to-br from-indigo-300 via-gray-200 to-indigo-400 py-12">
-    <div className="container max-w-md mx-auto px-4 flex-1 flex flex-col justify-center">
-      <div className="text-center mb-8">
-        <img 
-          src="logo.png" 
-          alt="Tailor's Log Book" 
-          className="h-24 w-24 mx-auto rounded-full border-2 border-white/20"
-        />
-        <h1 className="text-3xl font-bold font-serif mt-4 text-black">Tailor's Log Book</h1>
-        <p className="text-gray-900">Sign in to access your client records</p>
-      </div>
-      
+    <div className="min-h-screen flex flex-col bg-gradient-to-r from-indigo-200 via-gray-100 to-indigo-200 py-12">
+      <div className="container max-w-md mx-auto px-4">
+        <div className="text-center mb-8">
+          <img 
+            src="logo.png" 
+            alt="Tailor's Log Book" 
+            className="h-24 w-24 mx-auto rounded-full border-2 border-white/20"
+          />
+          <h1 className="text-3xl font-bold font-serif mt-4">Tailor's Log Book</h1>
+          <p className="text-gray-600">Sign in to access your client records</p>
+        </div>
         
-        
-     <Card className="bg-gray-300/90 border-gray-400 backdrop-blur-sm shadow-[0_70px_100px_-1px_rgba(0,0,0,0.3)]">
+        <Card>
           <Tabs defaultValue="login">
-<TabsList className="w-full flex gap-1 bg-gray-200 p-1 rounded-lg">
-             <TabsTrigger 
-    value="login" 
-    className="w-full data-[state=active]:bg-indigo-300 shadow-md hover:shadow-lg hover:shadow-gray-900/30 data-[state=active]:text-gray-800 py-2 rounded-md transition-colors"
-  >
-    Login
-  </TabsTrigger>
-              <TabsTrigger 
-    value="signup" 
-    className="w-full bg-emerald-200 shadow-md hover:shadow-lg hover:shadow-gray-900/30 data-[state=active]:bg-green-600 data-[state=active]:text-white py-2 rounded-md transition-colors"
-  >
-    Sign Up
-  </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
