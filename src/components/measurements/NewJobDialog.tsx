@@ -1,5 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
+// @ts-ignore
+import { useMutation } from 'convex/react';
+// @ts-ignore
+import { api } from '../../../convex/_generated/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -35,6 +40,8 @@ interface JobData {
   recordedDateTime: string;
 }
 
+const USE_CONVEX = import.meta.env.VITE_USE_CONVEX === 'true';
+
 interface NewJobDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -54,6 +61,11 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
   onSubmit,
   isSubmitting
 }) => {
+  const { user } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const upsert = useMutation(api.jobs.upsert);
+
   const { toast } = useToast();
   const [collectionDate, setCollectionDate] = useState<Date | undefined>(undefined);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -115,7 +127,23 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
         recordedDateTime: new Date().toISOString()
       };
 
-      await onSubmit(clientId, numericData);
+      if (USE_CONVEX) {
+        const { user } = useAuth();
+        const upsert = useMutation(api.jobs.upsert);
+        await upsert({
+          userId: user!.id,
+          measurementId: clientId as any,
+          description: numericData.description,
+          serviceCharge: numericData.serviceCharge,
+          paidAmount: numericData.paidAmount,
+          currency: numericData.serviceChargeCurrency,
+          label: 'Job',
+          collectionDate: numericData.collectionDate ?? undefined,
+          collectionDateType: numericData.collectionDateType,
+        });
+      } else {
+        await onSubmit(clientId, numericData);
+      }
       resetForm();
     } catch (error) {
       toast({

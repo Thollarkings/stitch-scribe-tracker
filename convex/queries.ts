@@ -1,4 +1,4 @@
-import { query } from "convex/server";
+import { query } from "./_generated/server";
 import { v } from "convex/values";
 
 // List measurements for the current user, optional name search

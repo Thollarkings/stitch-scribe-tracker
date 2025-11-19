@@ -4,10 +4,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
+// Convex feature flag and hooks
+const USE_CONVEX = import.meta.env.VITE_USE_CONVEX === 'true';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { useQuery as useConvexQuery, useMutation as useConvexMutation } from 'convex/react';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { api } from '../../convex/_generated/api';
+
 export const useMeasurements = () => {
   const { user } = useAuth();
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  // Convex mutations used when feature flag is on
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const convexBulkImport = USE_CONVEX ? useConvexMutation(api.measurements.bulkImport) : undefined;
 
   // Fetch measurements from Supabase
   const fetchMeasurements = async () => {
@@ -215,7 +228,6 @@ export const useMeasurements = () => {
           throw error;
         }
       }
-
       if (USE_CONVEX) {
         // Build a minimal items array compatible with server schema
         const items = importedData.map((item) => {

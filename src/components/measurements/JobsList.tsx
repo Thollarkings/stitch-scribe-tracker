@@ -1,4 +1,11 @@
 import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+// @ts-ignore
+import { api } from '../../../convex/_generated/api';
+// @ts-ignore
+import { useMutation } from 'convex/react';
+import { useJobs } from '@/hooks/useJobs';
+const USE_CONVEX = import.meta.env.VITE_USE_CONVEX === 'true';
 import { ListTodo, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -42,10 +49,32 @@ const getAllJobs = (measurement: any, currency: string): Job[] => {
 
 const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange, isOpen, onUpdateMeasurement }) => {
   const [editingJobIndex, setEditingJobIndex] = useState<number | null>(null);
+  const { user } = useAuth();
+  const { jobs: convexJobs, upsertJob, deleteJob: removeJob } = useJobs(measurement?.id);
+
   const [editForm, setEditForm] = useState<Partial<Job>>({});
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const jobs = getAllJobs(measurement, currency);
+  const jobs = USE_CONVEX && convexJobs
+    ? [
+        // initial job from measurement top-level
+        ...getAllJobs(measurement, currency).slice(0, 1),
+        // map convex jobs to UI shape
+        ...convexJobs.map((j: any) => ({
+          label: j.label || 'Job',
+          description: j.description,
+          recordedDateTime: new Date(j.createdAt).toISOString(),
+          collectionDate: j.collectionDate ?? null,
+          collectionDateType: j.collectionDateType,
+          serviceCharge: j.serviceCharge,
+          paidAmount: j.paidAmount,
+          balance: j.balance,
+          serviceChargeCurrency: j.currency || currency,
+          _id: j._id,
+        }))
+      ]
+    : getAllJobs(measurement, currency);
+
 
   const getTotalPaidAmount = () => {
     return jobs.reduce((acc, job) =>
@@ -110,7 +139,7 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
   };
 
   // Save edits
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!onUpdateMeasurement || editingJobIndex === null) return;
 
     if (editingJobIndex === 0) {
@@ -141,7 +170,7 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
   };
 
   // Delete job
-  const deleteJob = (index: number) => {
+  const deleteJob = async (index: number) => {
     if (!onUpdateMeasurement) return;
     if (index === 0) {
       const clearedMeasurement = {
