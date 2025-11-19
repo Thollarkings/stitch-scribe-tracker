@@ -27,7 +27,7 @@ const Navbar = ({ searchTerm, setSearchTerm, toggleForm, formVisible }: NavbarPr
                 style={{ filter: 'drop-shadow(0 0 10px rgba(4, 3, 0, 0.5))' }} // Tailor's Gold shadow 
               />
               <div>
-                <h1 className=\"text-3xl font-bold font-serif\">Tailors Suite</h1>
+                <h1 className="text-3xl font-bold font-serif">Tailors Suite</h1>
                 <p className="text-xs md:text-base text-white/80">Record, track & deliver with precision</p>
               </div>
             </div>
