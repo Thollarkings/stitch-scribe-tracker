@@ -22,12 +22,12 @@ const Navbar = ({ searchTerm, setSearchTerm, toggleForm, formVisible }: NavbarPr
             <div className="flex items-center gap-3">
               <img 
                 src="/icons/icon-192x192.png" 
-                alt="Tailor's Log Book" 
+                alt="Tailors Suite" 
                 className="h-16 w-16 rounded-full border-2 border-white/20"
                 style={{ filter: 'drop-shadow(0 0 10px rgba(4, 3, 0, 0.5))' }} // Tailor's Gold shadow 
               />
               <div>
-                <h1 className="text-3xl font-bold font-serif">Tailor's Log Book</h1>
+                <h1 className=\"text-3xl font-bold font-serif\">Tailors Suite</h1>
                 <p className="text-xs md:text-base text-white/80">Record, track & deliver with precision</p>
               </div>
             </div>

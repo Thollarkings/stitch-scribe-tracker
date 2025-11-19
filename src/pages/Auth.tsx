@@ -82,7 +82,7 @@ const Auth = () => {
             alt="Tailor's Log Book" 
             className="h-24 w-24 mx-auto rounded-full border-2 border-white/20"
           />
-          <h1 className="text-3xl font-bold font-serif mt-4">Tailor's Log Book</h1>
+          <h1 className="text-3xl font-bold font-serif mt-4">Tailors Suite</h1>
           <p className="text-gray-600">Sign in to access your client records</p>
         </div>
         

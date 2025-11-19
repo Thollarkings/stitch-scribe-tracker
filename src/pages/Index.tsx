@@ -191,7 +191,7 @@ const Index = () => {
       </div>
       
       <footer className="py-4 text-center text-sm text-gray-700 border-t">
-        <p>&copy; Thollarkings {new Date().getFullYear()} - Tailor's Log Book</p>
+        <p>&copy; Thollarkings {new Date().getFullYear()} - Tailors Suite</p>
       </footer>
     </div>
   );
