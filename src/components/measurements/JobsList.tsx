@@ -6,6 +6,7 @@ import { api } from '../../../convex/_generated/api';
 import { useMutation } from 'convex/react';
 import { useJobs } from '@/hooks/useJobs';
 const USE_CONVEX = import.meta.env.VITE_USE_CONVEX === 'true';
+const isConvexId = (id: any) => typeof id === 'string' && !id.includes('-');
 import { ListTodo, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -50,7 +51,8 @@ const getAllJobs = (measurement: any, currency: string): Job[] => {
 const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange, isOpen, onUpdateMeasurement }) => {
   const [editingJobIndex, setEditingJobIndex] = useState<number | null>(null);
   const { user } = useAuth();
-  const { jobs: convexJobs, upsertJob, deleteJob: removeJob } = useJobs(measurement?.id);
+  const measurementIdForConvex = USE_CONVEX && isConvexId(measurement?.id) ? measurement.id : undefined;
+  const { jobs: convexJobs, upsertJob, deleteJob: removeJob } = useJobs(measurementIdForConvex);
 
   const [editForm, setEditForm] = useState<Partial<Job>>({});
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);

@@ -1,10 +1,15 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const base = env.VITE_BASE && env.VITE_BASE !== "auto"
+    ? env.VITE_BASE
+    : (mode === "production" ? "/" : "/stitch-scribe-tracker/");
+  return {
   server: {
     host: "::",
     port: 8080,
@@ -27,19 +32,19 @@ export default defineConfig(({ mode }) => ({
         scope: "/stitch-scribe-tracker/",
         icons: [
           {
-            src: "/icons/icon-192x192.png",
+            src: "icons/icon-192x192.png",
             sizes: "192x192",
             type: "image/png",
             purpose: "any",
           },
           {
-            src: "/icons/icon-512x512.png",
+            src: "icons/icon-512x512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any",
           },
           {
-            src: "/icons/maskable-icon-512x512.png",
+            src: "icons/maskable-icon-512x512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
@@ -47,13 +52,13 @@ export default defineConfig(({ mode }) => ({
         ],
         screenshots: [
           {
-            src: "/screenshots/screenshot1-wide.png",
+            src: "screenshots/screenshot1-wide.png",
             sizes: "1280x720",
             type: "image/png",
             form_factor: "wide",
           },
           {
-            src: "/screenshots/screenshot2.png",
+            src: "screenshots/screenshot2.png",
             sizes: "640x1136",
             type: "image/png",
           },
@@ -67,7 +72,7 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ].filter(Boolean),
-  base: "/stitch-scribe-tracker/", // Critical for GitHub Pages deployment
+  base: base, // Environment-driven base so Vercel uses "/" and dev uses GH Pages base
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

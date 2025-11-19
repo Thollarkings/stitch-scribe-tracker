@@ -25,13 +25,13 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
 
     <!-- PWA Configuration -->
-    <link rel="manifest" href="/manifest.json" />
+    <!-- Manifest is injected by VitePWA; remove manual link to avoid conflicts -->
     <meta name="theme-color" content="#317EFB" />
     
     <!-- iOS Meta -->
      <meta name="apple-mobile-web-app-title" content="StitchScribe">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="apple-touch-icon" href="/icons/icon-180x180.png">
 
@@ -40,7 +40,7 @@
   <body>
     <div id="root"></div>
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <!-- Removed external script that caused runtime errors (share-modal) -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

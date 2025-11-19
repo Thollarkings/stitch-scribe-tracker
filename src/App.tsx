@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { usePWAInstall } from "./hooks/usePWAInstall";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +34,8 @@ const App = () => {
           <PWAHandler />
           <Toaster />
           <Sonner />
-          <BrowserRouter basename="/stitch-scribe-tracker">
+          <ErrorBoundary>
+            <BrowserRouter basename={(import.meta.env.VITE_BASE || "/stitch-scribe-tracker").replace(/\/$/, "")}>
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={
@@ -48,7 +50,8 @@ const App = () => {
               } />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
+            </BrowserRouter>
+          </ErrorBoundary>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

@@ -41,6 +41,7 @@ interface JobData {
 }
 
 const USE_CONVEX = import.meta.env.VITE_USE_CONVEX === 'true';
+const isConvexId = (id: any) => typeof id === 'string' && !id.includes('-');
 
 interface NewJobDialogProps {
   isOpen: boolean;
@@ -127,7 +128,7 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
         recordedDateTime: new Date().toISOString()
       };
 
-      if (USE_CONVEX) {
+      if (USE_CONVEX && isConvexId(clientId)) {
         const { user } = useAuth();
         const upsert = useMutation(api.jobs.upsert);
         await upsert({
