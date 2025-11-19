@@ -10,6 +10,7 @@ import CardActions from './CardActions';
 import NewJobDialog from './NewJobDialog';
 import JobsList from './JobsList';
 import { Button } from '@/components/ui/button';
+import JobPickerDialog from '@/components/measurements/JobPickerDialog';
 import { useToast } from '@/components/ui/use-toast';
 import {
   Dialog,
@@ -97,6 +98,7 @@ const MeasurementCard = ({
 
   // Invoice dialog state
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [showJobPicker, setShowJobPicker] = useState(false);
   const [selectedJobIndex, setSelectedJobIndex] = useState<number | null>(null);
 
   // Helper function to get all jobs (initial + additional)
@@ -206,7 +208,8 @@ const MeasurementCard = ({
     setInvoiceDialogOpen(false);
 
     // Navigate to invoice page, passing job details in state
-    navigate(`/invoice/${measurement.id}`, { state: { job } });
+    const mapped = job?._id ? { ...job, id: job._id, serviceChargeCurrency: job.currency || job.serviceChargeCurrency } : job;
+    navigate(`/invoice/${measurement.id}`, { state: { job: mapped } });
   };
   
   const handleUpdateMeasurement = (updatedMeasurement: any) => {
@@ -235,7 +238,7 @@ const MeasurementCard = ({
               handleEdit={handleEdit}
               onDelete={onDelete}
               onNewJobClick={() => setNewJobDialogOpen(true)}
-              onServiceInvoiceClick={handleOpenInvoiceDialog}
+              onServiceInvoiceClick={() => setShowJobPicker(true)}
             />
             <JobsList 
               measurement={measurement} 
@@ -262,8 +265,16 @@ const MeasurementCard = ({
         isSubmitting={isSubmitting}
       />
 
-      {/* Invoice Selection Dialog */}
-      <Dialog open={invoiceDialogOpen} onOpenChange={setInvoiceDialogOpen}>
+      {/* Job Picker Dialog */}
+      <JobPickerDialog
+        open={showJobPicker}
+        onOpenChange={setShowJobPicker}
+        measurement={measurement}
+        onConfirm={(job) => navigate(`/invoice/${measurement.id}`, { state: { job } })}
+      />
+
+      {/* Legacy Invoice Selection Dialog (temporarily kept for reference, hidden) */}
+      <Dialog open={false} onOpenChange={setInvoiceDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Select Job for Invoice</DialogTitle>

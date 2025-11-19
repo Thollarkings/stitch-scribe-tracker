@@ -26,6 +26,14 @@ export const create = mutation({
     collectionDate: v.optional(v.string()),
     collectionDateType: v.optional(v.union(v.literal("estimated"), v.literal("exact"))),
 
+    // extra optional fields carried by client
+    timestamp: v.optional(v.string()),
+    user_id: v.optional(v.string()),
+    serviceCharge: v.optional(v.union(v.string(), v.number())),
+    paidAmount: v.optional(v.union(v.string(), v.number())),
+    balance: v.optional(v.union(v.string(), v.number())),
+    jobs: v.optional(v.any()),
+
     head: v.optional(v.number()),
     neck: v.optional(v.number()),
     shoulderToShoulder: v.optional(v.number()),
@@ -53,6 +61,50 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
     const id = await ctx.db.insert("measurements", { ...args, createdAt: now, updatedAt: now });
+
+    // If payment fields were provided, reflect into an Initial Job entry (idempotent)
+    const sc = args.serviceCharge;
+    const pa = args.paidAmount;
+    const hasPayment = typeof sc !== 'undefined' || typeof pa !== 'undefined';
+    if (hasPayment) {
+      const serviceCharge = typeof sc === 'string' ? parseFloat(sc) || 0 : (sc ?? 0);
+      const paidAmount = typeof pa === 'string' ? parseFloat(pa) || 0 : (pa ?? 0);
+      const balance = serviceCharge - paidAmount;
+
+      // Guard against double-insert by checking for an existing Initial Job
+      const existingJobs = await ctx.db
+        .query('jobs')
+        .withIndex('by_measurement', q => q.eq('measurementId', id))
+        .collect();
+      const initial = existingJobs.find(j => j.label === 'Initial Job');
+      if (initial) {
+        await ctx.db.patch(initial._id, {
+          description: args.comments ?? initial.description,
+          serviceCharge,
+          paidAmount,
+          balance,
+          collectionDate: args.collectionDate ?? initial.collectionDate,
+          collectionDateType: args.collectionDateType ?? initial.collectionDateType,
+          updatedAt: now,
+        });
+      } else {
+        await ctx.db.insert('jobs', {
+          measurementId: id,
+          userId: args.userId,
+          description: args.comments,
+          serviceCharge,
+          paidAmount,
+          balance,
+          currency: 'NGN',
+          label: 'Initial Job',
+          collectionDate: args.collectionDate,
+          collectionDateType: args.collectionDateType,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+
     return id;
   },
 });
@@ -67,6 +119,14 @@ export const update = mutation({
     comments: v.optional(v.string()),
     collectionDate: v.optional(v.string()),
     collectionDateType: v.optional(v.union(v.literal("estimated"), v.literal("exact"))),
+
+    // extra optional fields carried by client
+    timestamp: v.optional(v.string()),
+    user_id: v.optional(v.string()),
+    serviceCharge: v.optional(v.union(v.string(), v.number())),
+    paidAmount: v.optional(v.union(v.string(), v.number())),
+    balance: v.optional(v.union(v.string(), v.number())),
+    jobs: v.optional(v.any()),
 
     head: v.optional(v.number()),
     neck: v.optional(v.number()),
@@ -93,7 +153,52 @@ export const update = mutation({
     insideLegSeam: v.optional(v.number()),
   },
   handler: async (ctx, { id, ...patch }) => {
-    await ctx.db.patch(id, { ...patch, updatedAt: Date.now() });
+    const now = Date.now();
+    await ctx.db.patch(id, { ...patch, updatedAt: now });
+
+    // Reflect payment fields into Initial Job (upsert)
+    const sc = patch.serviceCharge as any;
+    const pa = patch.paidAmount as any;
+    const hasPayment = typeof sc !== 'undefined' || typeof pa !== 'undefined';
+    if (hasPayment) {
+      const serviceCharge = typeof sc === 'string' ? parseFloat(sc) || 0 : (sc ?? 0);
+      const paidAmount = typeof pa === 'string' ? parseFloat(pa) || 0 : (pa ?? 0);
+      const balance = serviceCharge - paidAmount;
+      const jobs = await ctx.db
+        .query('jobs')
+        .withIndex('by_measurement', q => q.eq('measurementId', id))
+        .collect();
+      const initial = jobs.find(j => j.label === 'Initial Job');
+      if (initial) {
+        await ctx.db.patch(initial._id, {
+          description: (patch as any).comments ?? initial.description,
+          serviceCharge,
+          paidAmount,
+          balance,
+          collectionDate: (patch as any).collectionDate ?? initial.collectionDate,
+          collectionDateType: (patch as any).collectionDateType ?? initial.collectionDateType,
+          updatedAt: now,
+        });
+      } else {
+        // Need userId to insert job; read it from measurement
+        const meas = await ctx.db.get(id);
+        await ctx.db.insert('jobs', {
+          measurementId: id,
+          userId: meas!.userId,
+          description: (patch as any).comments,
+          serviceCharge,
+          paidAmount,
+          balance,
+          currency: 'NGN',
+          label: 'Initial Job',
+          collectionDate: (patch as any).collectionDate,
+          collectionDateType: (patch as any).collectionDateType,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+
     return id;
   },
 });
@@ -146,6 +251,14 @@ export const bulkImport = mutation({
       calf: v.optional(v.number()),
       ankle: v.optional(v.number()),
       insideLegSeam: v.optional(v.number()),
+
+      // extra optional fields carried by client
+      timestamp: v.optional(v.string()),
+      user_id: v.optional(v.string()),
+      serviceCharge: v.optional(v.union(v.string(), v.number())),
+      paidAmount: v.optional(v.union(v.string(), v.number())),
+      balance: v.optional(v.union(v.string(), v.number())),
+      jobs: v.optional(v.any()),
     }))
   },
   handler: async (ctx, { userId, items }) => {

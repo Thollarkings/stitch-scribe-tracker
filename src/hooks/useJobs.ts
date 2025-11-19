@@ -8,9 +8,11 @@ export const useJobs = (measurementId?: string) => {
   const { user } = useAuth();
   const userId = user?.id ?? '';
 
-  const jobs = measurementId && userId
-    ? useQuery(api.jobs.listByMeasurement, { measurementId, userId })
-    : undefined;
+  const enabled = Boolean(measurementId && userId);
+  const jobs = useQuery(
+    api.jobs.listByMeasurement,
+    enabled ? { measurementId: measurementId as string, userId } : 'skip'
+  );
 
   const upsertJob = useMutation(api.jobs.upsert);
   const deleteJob = useMutation(api.jobs.remove);

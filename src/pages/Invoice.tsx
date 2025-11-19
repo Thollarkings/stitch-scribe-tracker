@@ -9,6 +9,7 @@ import { FileText, Download, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useMeasurements } from '@/hooks/useMeasurements';
+import { useJobs } from '@/hooks/useJobs';
 import html2canvas from 'html2canvas';
 import { PDFDocument, rgb } from 'pdf-lib';
 
@@ -79,6 +80,7 @@ const Invoice = () => {
   });
   const [selectedColorScheme, setSelectedColorScheme] = useState(0);
   const [measurement, setMeasurement] = useState<any | null>(null);
+  const convexJobs = useJobs(measurement?.id)?.jobs;
   const invoiceRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -206,28 +208,35 @@ const Invoice = () => {
 
   // Job selection logic
   const selectedJob = location.state?.job;
-  let jobToInvoice: any = null;
+  // Decide which jobs to render on invoice
+  let jobsForInvoice: any[] = [];
   if (selectedJob) {
-    jobToInvoice = selectedJob;
+    jobsForInvoice = [selectedJob];
   } else if (measurement) {
-    jobToInvoice = {
-      serviceCharge: typeof measurement.serviceCharge === 'number'
-        ? measurement.serviceCharge
-        : parseFloat(measurement.serviceCharge || '0'),
-      paidAmount: typeof measurement.paidAmount === 'number'
-        ? measurement.paidAmount
-        : parseFloat(measurement.paidAmount || '0'),
-      balance: (typeof measurement.serviceCharge === 'number'
-        ? measurement.serviceCharge
-        : parseFloat(measurement.serviceCharge || '0')) -
-        (typeof measurement.paidAmount === 'number'
-        ? measurement.paidAmount
-        : parseFloat(measurement.paidAmount || '0')),
-      collectionDate: measurement.collectionDate,
-      serviceChargeCurrency: measurement.serviceChargeCurrency || 'NGN',
-      label: 'Initial Job'
-    };
+    if (convexJobs && convexJobs.length > 0) {
+      jobsForInvoice = convexJobs as any[];
+    } else {
+      // Fallback to derived initial job from measurement
+      const sc = typeof measurement.serviceCharge === 'number' ? measurement.serviceCharge : parseFloat(measurement.serviceCharge || '0');
+      const pa = typeof measurement.paidAmount === 'number' ? measurement.paidAmount : parseFloat(measurement.paidAmount || '0');
+      jobsForInvoice = [{
+        label: 'Initial Job',
+        description: measurement.comments,
+        serviceCharge: sc,
+        paidAmount: pa,
+        balance: sc - pa,
+        collectionDate: measurement.collectionDate,
+        currency: measurement.serviceChargeCurrency || 'NGN',
+      }];
+    }
   }
+  // Compute totals
+  const totals = jobsForInvoice.reduce((acc, j) => {
+    acc.serviceCharge += Number(j.serviceCharge) || 0;
+    acc.paidAmount += Number(j.paidAmount) || 0;
+    return acc;
+  }, { serviceCharge: 0, paidAmount: 0 });
+  const totalBalance = totals.serviceCharge - totals.paidAmount;
 
   if (isLoading) {
     return (
@@ -405,7 +414,7 @@ const Invoice = () => {
         <div className="lg:col-span-2 border rounded-lg shadow-lg overflow-hidden bg-white">
           <div className="p-6">
             <h2 className="text-lg font-semibold mb-4">Invoice Preview</h2>
-            {!measurement || !jobToInvoice ? (
+            {!measurement || jobsForInvoice.length === 0 ? (
               <div className="flex justify-center items-center h-[600px] border rounded-lg">
                 <p className="text-muted-foreground">No client/job data found</p>
               </div>
@@ -449,10 +458,10 @@ const Invoice = () => {
                       <h3 className="font-semibold mb-2">Invoice Details:</h3>
                       <p><span className="font-medium">Date:</span> {formattedDate}</p>
                       <p><span className="font-medium">Invoice #:</span> INV-{Math.floor(Math.random() * 10000).toString().padStart(4, '0')}</p>
-                      {jobToInvoice.collectionDate && (
+                      {jobsForInvoice[0]?.collectionDate && (
                         <p>
                           <span className="font-medium">Collection Date:</span> {" "}
-                          {format(new Date(jobToInvoice.collectionDate), 'MMMM dd, yyyy')}
+                          {format(new Date(jobsForInvoice[0].collectionDate), 'MMMM dd, yyyy')}
                         </p>
                       )}
                     </div>
@@ -468,60 +477,62 @@ const Invoice = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td className="py-4 px-4 border-b">1</td>
-                          <td className="py-4 px-4 border-b">
-                            {jobToInvoice.label || 'Tailoring Services'} for {measurement.name}
-                            {measurement.comments && (
-                              <p className="text-sm text-gray-600 mt-1">{measurement.comments}</p>
-                            )}
-                          </td>
-                          <td className="py-4 px-4 border-b text-right">
-                            {jobToInvoice.serviceChargeCurrency === 'USD' && '$'}
-                            {jobToInvoice.serviceChargeCurrency === 'GBP' && '£'}
-                            {jobToInvoice.serviceChargeCurrency === 'EUR' && '€'}
-                            {jobToInvoice.serviceChargeCurrency === 'CAD' && '$'}
-                            {(!jobToInvoice.serviceChargeCurrency || jobToInvoice.serviceChargeCurrency === 'NGN') && '₦'}
-                            {' '}
-                            {parseFloat(jobToInvoice.serviceCharge || 0).toFixed(2)}
-                          </td>
-                        </tr>
+                        {jobsForInvoice.map((j, idx) => {
+                          const currency = j.currency || j.serviceChargeCurrency || measurement.serviceChargeCurrency || 'NGN';
+                          const amount = Number(j.serviceCharge) || 0;
+                          return (
+                            <tr key={j._id || idx}>
+                              <td className="py-4 px-4 border-b">{idx + 1}</td>
+                              <td className="py-4 px-4 border-b">
+                                {(j.label || 'Tailoring Services')} for {measurement.name}
+                                {j.description && (
+                                  <p className="text-sm text-gray-600 mt-1">{j.description}</p>
+                                )}
+                              </td>
+                              <td className="py-4 px-4 border-b text-right">
+                                {currency === 'USD' && '$'}
+                                {currency === 'GBP' && '£'}
+                                {currency === 'EUR' && '€'}
+                                {currency === 'CAD' && '$'}
+                                {(currency === 'NGN' || !currency) && '₦'}{' '}
+                                {amount.toFixed(2)}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                       <tfoot>
                         <tr className={`${currentColors.secondary} font-medium`}>
                           <td className="py-2 px-4 border-t" colSpan={2}>Total</td>
                           <td className="py-2 px-4 border-t text-right">
-                            {jobToInvoice.serviceChargeCurrency === 'USD' && '$'}
-                            {jobToInvoice.serviceChargeCurrency === 'GBP' && '£'}
-                            {jobToInvoice.serviceChargeCurrency === 'EUR' && '€'}
-                            {jobToInvoice.serviceChargeCurrency === 'CAD' && '$'}
-                            {(!jobToInvoice.serviceChargeCurrency || jobToInvoice.serviceChargeCurrency === 'NGN') && '₦'}
-                            {' '}
-                            {parseFloat(jobToInvoice.serviceCharge || 0).toFixed(2)}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'USD' && '$'}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'GBP' && '£'}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'EUR' && '€'}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'CAD' && '$'}
+                            {(!measurement.serviceChargeCurrency || measurement.serviceChargeCurrency === 'NGN') && '₦'}{' '}
+                            {totals.serviceCharge.toFixed(2)}
                           </td>
                         </tr>
                         <tr>
                           <td className="py-2 px-4" colSpan={2}>Paid Amount</td>
                           <td className="py-2 px-4 text-right">
-                            {jobToInvoice.serviceChargeCurrency === 'USD' && '$'}
-                            {jobToInvoice.serviceChargeCurrency === 'GBP' && '£'}
-                            {jobToInvoice.serviceChargeCurrency === 'EUR' && '€'}
-                            {jobToInvoice.serviceChargeCurrency === 'CAD' && '$'}
-                            {(!jobToInvoice.serviceChargeCurrency || jobToInvoice.serviceChargeCurrency === 'NGN') && '₦'}
-                            {' '}
-                            {parseFloat(jobToInvoice.paidAmount || 0).toFixed(2)}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'USD' && '$'}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'GBP' && '£'}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'EUR' && '€'}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'CAD' && '$'}
+                            {(!measurement.serviceChargeCurrency || measurement.serviceChargeCurrency === 'NGN') && '₦'}{' '}
+                            {totals.paidAmount.toFixed(2)}
                           </td>
                         </tr>
                         <tr>
                           <td className="py-2 px-4 font-bold" colSpan={2}>Balance</td>
                           <td className="py-2 px-4 text-right font-bold">
-                            {jobToInvoice.serviceChargeCurrency === 'USD' && '$'}
-                            {jobToInvoice.serviceChargeCurrency === 'GBP' && '£'}
-                            {jobToInvoice.serviceChargeCurrency === 'EUR' && '€'}
-                            {jobToInvoice.serviceChargeCurrency === 'CAD' && '$'}
-                            {(!jobToInvoice.serviceChargeCurrency || jobToInvoice.serviceChargeCurrency === 'NGN') && '₦'}
-                            {' '}
-                            {parseFloat(jobToInvoice.balance || 0).toFixed(2)}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'USD' && '$'}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'GBP' && '£'}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'EUR' && '€'}
+                            {(measurement.serviceChargeCurrency || 'NGN') === 'CAD' && '$'}
+                            {(!measurement.serviceChargeCurrency || measurement.serviceChargeCurrency === 'NGN') && '₦'}{' '}
+                            {totalBalance.toFixed(2)}
                           </td>
                         </tr>
                       </tfoot>

@@ -37,11 +37,33 @@ export default defineSchema({
     ankle: v.optional(v.number()),
     insideLegSeam: v.optional(v.number()),
 
+    // Legacy/optional fields the client may include
+    timestamp: v.optional(v.string()),
+    user_id: v.optional(v.string()),
+    serviceCharge: v.optional(v.union(v.string(), v.number())),
+    paidAmount: v.optional(v.union(v.string(), v.number())),
+    balance: v.optional(v.union(v.string(), v.number())),
+    jobs: v.optional(v.any()),
+
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_userId", ["userId"]) // for listing user measurements
     .index("by_userId_name", ["userId", "name"]), // for search
+
+  users: defineTable({
+    email: v.string(),
+    name: v.string(),
+    passwordHash: v.string(),
+    createdAt: v.number(),
+  }).index("by_email", ["email"]),
+
+  sessions: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+  }).index("by_token", ["token"]),
 
   jobs: defineTable({
     measurementId: v.id("measurements"),

@@ -26,19 +26,10 @@ const UserMenu = () => {
 
   const getInitials = () => {
     if (!user?.email) return "U";
-    
-    // Try to get name from user metadata if it exists
-    const userMeta = user.user_metadata;
-    if (userMeta && userMeta.name) {
-      const nameParts = userMeta.name.split(" ");
-      if (nameParts.length > 1) {
-        return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
-      }
-      return nameParts[0][0].toUpperCase();
-    }
-    
-    // Fallback to email
-    return user.email.substring(0, 2).toUpperCase();
+    const displayName = user?.name || user?.email;
+    const parts = String(displayName).split(" ");
+    if (parts.length > 1) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return parts[0].substring(0, 2).toUpperCase();
   };
 
   return (
@@ -54,7 +45,7 @@ const UserMenu = () => {
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user?.user_metadata?.name || "User"}
+              {user?.name || "User"}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user?.email}

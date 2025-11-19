@@ -129,8 +129,6 @@ const NewJobDialog: React.FC<NewJobDialogProps> = ({
       };
 
       if (USE_CONVEX && isConvexId(clientId)) {
-        const { user } = useAuth();
-        const upsert = useMutation(api.jobs.upsert);
         await upsert({
           userId: user!.id,
           measurementId: clientId as any,

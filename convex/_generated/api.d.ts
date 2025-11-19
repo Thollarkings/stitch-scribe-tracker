@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
+import type * as auth_actions from "../auth_actions.js";
 import type * as jobs from "../jobs.js";
 import type * as measurements from "../measurements.js";
 import type * as mutations from "../mutations.js";
@@ -20,6 +22,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
+  auth_actions: typeof auth_actions;
   jobs: typeof jobs;
   measurements: typeof measurements;
   mutations: typeof mutations;

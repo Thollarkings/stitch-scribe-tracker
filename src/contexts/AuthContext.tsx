@@ -1,94 +1,98 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+// Convex custom email/password auth using sessions stored in Convex
+// @ts-ignore
+import { useMutation, useQuery, useAction } from 'convex/react';
+// @ts-ignore
+import { api } from '../../convex/_generated/api';
+
+interface AuthUser { id: string; email: string; name?: string }
 
 interface AuthContextType {
-  session: Session | null;
-  user: User | null;
+  user: AuthUser | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{
-    error: Error | null;
-    data: any | null;
-  }>;
-  signUp: (email: string, password: string, name: string) => Promise<{
-    error: Error | null;
-    data: any | null;
-  }>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('convex_token'));
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Queries/Mutations
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const me = useQuery(api.auth.me, token ? { token } : 'skip');
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const login = useAction(api.auth_actions.login);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const register = useAction(api.auth_actions.register);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const logout = useAction(api.auth_actions.logout);
+
   useEffect(() => {
-    // Set up the auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        setIsLoading(false);
-      }
-    );
-
-    // THEN check for the current session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
+    if (token === null) {
+      setUser(null);
       setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+      return;
+    }
+    if (me === undefined) {
+      // query not issued yet
+      setIsLoading(true);
+      return;
+    }
+    // me resolved (either user or null)
+    setUser(me ?? null);
+    setIsLoading(false);
+  }, [token, me]);
 
   const signIn = async (email: string, password: string) => {
     try {
-      return await supabase.auth.signInWithPassword({ email, password });
-    } catch (error: any) {
-      return { error, data: null };
+      const res = await login({ email, password });
+      localStorage.setItem('convex_token', res.token);
+      setToken(res.token);
+      setUser(res.user);
+    } catch (err: any) {
+      console.error('Login failed', err);
+      throw new Error(err?.message || 'Failed to sign in. Please check your credentials.');
     }
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name?: string) => {
     try {
-      return await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          },
-        },
-      });
-    } catch (error: any) {
-      return { error, data: null };
+      const res = await register({ email, password, name });
+      localStorage.setItem('convex_token', res.token);
+      setToken(res.token);
+      setUser(res.user);
+    } catch (err: any) {
+      console.error('Registration failed', err);
+      throw new Error(err?.message || 'Failed to sign up. Please try again.');
     }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const t = localStorage.getItem('convex_token');
+    if (t) await logout({ token: t });
+    localStorage.removeItem('convex_token');
+    setToken(null);
+    setUser(null);
   };
 
-  const value = {
-    session,
-    user,
-    isLoading,
-    signIn,
-    signUp,
-    signOut,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, isLoading, signIn, signUp, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  return ctx;
 }

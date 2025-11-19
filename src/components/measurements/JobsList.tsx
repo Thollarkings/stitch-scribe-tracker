@@ -56,12 +56,12 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
 
   const [editForm, setEditForm] = useState<Partial<Job>>({});
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedDeleteIndex, setSelectedDeleteIndex] = useState<number | null>(null);
 
   const jobs = USE_CONVEX && convexJobs
     ? [
-        // initial job from measurement top-level
-        ...getAllJobs(measurement, currency).slice(0, 1),
-        // map convex jobs to UI shape
+        // Use only Convex jobs to avoid duplicating "Initial Job" from measurement top-level
         ...convexJobs.map((j: any) => ({
           label: j.label || 'Job',
           description: j.description,
@@ -186,9 +186,14 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
       };
       onUpdateMeasurement(clearedMeasurement);
     } else {
-      const updatedJobs = [...(measurement.jobs || [])];
-      updatedJobs.splice(index - 1, 1);
-      onUpdateMeasurement({ ...measurement, jobs: updatedJobs });
+      if (USE_CONVEX && measurementIdForConvex && convexJobs && convexJobs[index - 1]) {
+        await removeJob({ jobId: convexJobs[index - 1]._id, userId: user!.id });
+        // No need to update measurement document when deleting a non-initial Convex job
+      } else {
+        const updatedJobs = [...(measurement.jobs || [])];
+        updatedJobs.splice(index - 1, 1);
+        onUpdateMeasurement({ ...measurement, jobs: updatedJobs });
+      }
     }
   };
 
@@ -237,7 +242,7 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
                         <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => openEdit(idx)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" className="h-6 px-2 text-red-600 hover:text-red-800" onClick={() => deleteJob(idx)}>
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-red-600 hover:text-red-800" onClick={() => { setSelectedDeleteIndex(idx); setShowDeleteConfirm(true); }}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -372,6 +377,31 @@ const JobsList: React.FC<JobsListProps> = ({ measurement, currency, onOpenChange
           <DialogFooter>
             <Button variant="outline" onClick={closeEdit}>Cancel</Button>
             <Button onClick={saveEdit}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Job</DialogTitle>
+          </DialogHeader>
+          <p>Are you sure you want to delete this job? This action cannot be undone.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={async () => {
+                if (selectedDeleteIndex !== null) {
+                  await deleteJob(selectedDeleteIndex);
+                }
+                setShowDeleteConfirm(false);
+                setSelectedDeleteIndex(null);
+              }}
+            >
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

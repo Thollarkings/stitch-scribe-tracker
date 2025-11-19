@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+// Supabase removed for measurements cutover
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,24 +17,40 @@ export const useMeasurements = () => {
   const { user } = useAuth();
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  // Convex mutations used when feature flag is on
+  // Convex queries/mutations
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const convexList = USE_CONVEX && user ? useConvexQuery(api.measurements.list, { userId: user.id }) : undefined;
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const convexCreate = USE_CONVEX ? useConvexMutation(api.measurements.create) : undefined;
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const convexUpdate = USE_CONVEX ? useConvexMutation(api.measurements.update) : undefined;
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const convexDelete = USE_CONVEX ? useConvexMutation(api.measurements.remove) : undefined;
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const convexBulkImport = USE_CONVEX ? useConvexMutation(api.measurements.bulkImport) : undefined;
 
-  // Fetch measurements from Supabase
+  // Fetch measurements from Supabase or Convex
   const fetchMeasurements = async () => {
     if (!user) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('measurements')
-        .select('*')
-        .order('timestamp', { ascending: false });
-
-      if (error) throw error;
-
-      setMeasurements(data || []);
+      if (USE_CONVEX) {
+        // Real-time list comes from convexList; map _id to id for UI compatibility
+        const list = ((convexList as any[]) || []).map((d: any) => ({ ...d, id: d.id ?? d._id }));
+        setMeasurements(list);
+      } else {
+        const { data, error } = await supabase
+          .from('measurements')
+          .select('*')
+          .order('timestamp', { ascending: false });
+        if (error) throw error;
+        setMeasurements(data || []);
+      }
     } catch (error) {
       console.error("Error fetching measurements:", error);
       toast.error("Failed to load measurements");
@@ -73,29 +89,39 @@ export const useMeasurements = () => {
 
       console.log('Data to save after processing:', JSON.stringify(dataToSave));
 
-      if (isEditing) {
-        // Update existing measurement
-        const { error } = await supabase
-          .from('measurements')
-          .update(dataToSave)
-          .eq('id', dataToSave.id);
-
-        if (error) {
-          console.error("Update error:", error);
-          throw error;
+      if (USE_CONVEX) {
+        // All fields are allowed by Convex validator; only strip the local id if present
+        const { id: _localId, _id: _convexId, _creationTime: _ct, ...allowed } = dataToSave as any;
+        if (isEditing && dataToSave.id) {
+          await convexUpdate!({ id: dataToSave.id, ...allowed });
+          toast.success("Client measurements updated successfully");
+        } else {
+          await convexCreate!({ userId: user!.id, ...allowed });
+          toast.success(`${measurementData.name}'s measurements saved`);
         }
-        toast.success("Client measurements updated successfully");
       } else {
-        // Insert new measurement
-        const { error } = await supabase
-          .from('measurements')
-          .insert(dataToSave);
+        if (isEditing) {
+          const { error } = await supabase
+            .from('measurements')
+            .update(dataToSave)
+            .eq('id', dataToSave.id);
 
-        if (error) {
-          console.error("Insert error:", error);
-          throw error;
+          if (error) {
+            console.error("Update error:", error);
+            throw error;
+          }
+          toast.success("Client measurements updated successfully");
+        } else {
+          const { error } = await supabase
+            .from('measurements')
+            .insert(dataToSave);
+
+          if (error) {
+            console.error("Insert error:", error);
+            throw error;
+          }
+          toast.success(`${measurementData.name}'s measurements saved`);
         }
-        toast.success(`${measurementData.name}'s measurements saved`);
       }
 
       // Refresh measurements
@@ -111,13 +137,22 @@ export const useMeasurements = () => {
   // Delete a measurement
   const deleteMeasurement = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('measurements')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
+      if (USE_CONVEX) {
+        // Find the actual Convex document id if available
+        const target = measurements.find((m: any) => m._id === id || m.id === id) as any;
+        const convexId = target?._id || (!String(id).includes('-') ? id : undefined);
+        if (!convexId) {
+          toast.error('Cannot delete: This record is not a Convex document (legacy).');
+          return false;
+        }
+        await convexDelete!({ id: convexId });
+      } else {
+        const { error } = await supabase
+          .from('measurements')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+      }
       toast.success(`Record deleted successfully`);
       await fetchMeasurements();
       return true;
@@ -251,9 +286,14 @@ export const useMeasurements = () => {
 
   useEffect(() => {
     if (user) {
-      fetchMeasurements();
+      if (USE_CONVEX) {
+        const list = ((convexList as any[]) || []).map((d: any) => ({ ...d, id: d.id ?? d._id }));
+        setMeasurements(list);
+      } else {
+        fetchMeasurements();
+      }
     }
-  }, [user]);
+  }, [user, convexList]);
 
   // Parse jobs array when fetching measurements
   const parsedMeasurements = measurements.map(measurement => {

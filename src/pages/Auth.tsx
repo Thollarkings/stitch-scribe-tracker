@@ -32,13 +32,9 @@ const Auth = () => {
 
     setAuthLoading(true);
     try {
-      const { error } = await signIn(loginData.email, loginData.password);
-      if (error) {
-        toast.error(error.message || 'Failed to sign in. Please check your credentials.');
-      } else {
-        toast.success('Logged in successfully!');
-        navigate('/');
-      }
+      await signIn(loginData.email, loginData.password);
+      toast.success('Logged in successfully!');
+      navigate('/');
     } catch (error: any) {
       toast.error(error.message || 'An unexpected error occurred');
     } finally {
@@ -68,14 +64,8 @@ const Auth = () => {
 
     setAuthLoading(true);
     try {
-      const { error } = await signUp(email, password, name);
-      if (error) {
-        toast.error(error.message || 'Failed to sign up');
-      } else {
-        toast.success('Account created! Please sign in.'); 
-        // For Supabase with email confirmation disabled, users can log in immediately
-        // For Supabase with email confirmation enabled, users must confirm their email first
-      }
+      await signUp(email, password, name);
+      toast.success('Account created!');
     } catch (error: any) {
       toast.error(error.message || 'An unexpected error occurred');
     } finally {
