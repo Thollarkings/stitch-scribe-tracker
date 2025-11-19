@@ -6,9 +6,7 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const base = env.VITE_BASE && env.VITE_BASE !== "auto"
-    ? env.VITE_BASE
-    : (mode === "production" ? "/" : "/stitch-scribe-tracker/");
+  const base = process.env.VERCEL ? "/" : (env.VITE_BASE && env.VITE_BASE !== "auto" ? env.VITE_BASE : (mode === "production" ? "/" : "/stitch-scribe-tracker/"));
   return {
   server: {
     host: "::",
