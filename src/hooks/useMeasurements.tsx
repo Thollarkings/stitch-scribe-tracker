@@ -216,6 +216,17 @@ export const useMeasurements = () => {
         }
       }
 
+      if (USE_CONVEX) {
+        // Build a minimal items array compatible with server schema
+        const items = importedData.map((item) => {
+          const { jobs, notes, serviceCharge, paidAmount, balance, ...rest } = item;
+          return {
+            ...rest,
+            comments: item.comments || item.notes || undefined,
+          };
+        });
+        await convexBulkImport!({ userId: user!.id, items });
+      }
       toast.success(`Imported ${importedData.length} records`);
       await fetchMeasurements();
       return true;
