@@ -9,6 +9,10 @@
     { "src": "/screenshots/(.*)", "dest": "/screenshots/$1" },
     { "src": "/registerSW.js", "dest": "/registerSW.js" },
     { "src": "/manifest.webmanifest", "dest": "/manifest.webmanifest" },
+    { "src": "/logo.png", "dest": "/logo.png" },
+    { "src": "/favicon.ico", "dest": "/favicon.ico" },
+    { "src": "/robots.txt", "dest": "/robots.txt" },
+    { "src": "/site.webmanifest", "dest": "/site.webmanifest" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
