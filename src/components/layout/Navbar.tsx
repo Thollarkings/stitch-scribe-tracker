@@ -21,10 +21,9 @@ const Navbar = ({ searchTerm, setSearchTerm, toggleForm, formVisible }: NavbarPr
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <img 
-                src="/icons/icon-192x192.png" 
+                src="/logo.png" 
                 alt="Tailors Suite" 
-                className="h-16 w-16 rounded-full border-2 border-white/20"
-                style={{ filter: 'drop-shadow(0 0 10px rgba(4, 3, 0, 0.5))' }} // Tailor's Gold shadow 
+                className="h-28 w-28 object-cover"
               />
               <div>
                 <h1 className="text-3xl font-bold font-serif">Tailors Suite</h1>

@@ -78,11 +78,12 @@ const Auth = () => {
       <div className="container max-w-md mx-auto px-4">
         <div className="text-center mb-8">
           <img 
-            src="logo.png" 
-            alt="Tailor's Log Book" 
-            className="h-24 w-24 mx-auto rounded-full border-2 border-white/20"
+            src="/logo.png" 
+            alt="Tailors Suite" 
+            className="h-84 w-84 mx-auto rounded-[30%] border-2 border-white/20 object-cover"
+            style={{ filter: 'drop-shadow(0 0 10px rgba(4, 3, 0, 0.5))' }}
           />
-          <h1 className="text-3xl font-bold font-serif mt-4">Tailors Suite</h1>
+          <h1 className="text-3xl font-bold font-serif -mt-4">Tailors Suite</h1>
           <p className="text-gray-600">Sign in to access your client records</p>
         </div>
         
