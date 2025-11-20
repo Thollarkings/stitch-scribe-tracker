@@ -1,21 +1,48 @@
 {
-  "name": "MyWebSite",
-  "short_name": "MySite",
+  "name": "TailorSuite",
+  "short_name": "TailorSuite",
+  "start_url": "/stitch-scribe-tracker/",
+  "display": "fullscreen",
+  "scope": "/stitch-scribe-tracker/",
+  "description": "TailorSuite is a complete toolset that simplifies tailoring by managing measurements, tracking progress and clients, and generating invoices with your custom logo—all you need for a perfect fit.",
+  "background_color": "#ffffff",
+  "theme_color": "#3F9D52",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "/public/icons/web-app-manifest-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any"
     },
     {
-      "src": "/public/icons/web-app-manifest-512x512.png",
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot1-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/screenshot2.png",
+      "sizes": "640x1136",
+      "type": "image/png"
+    }
+  ],
+  "display_override": [
+    "fullscreen",
+    "window-controls-overlay"
+  ]
 }

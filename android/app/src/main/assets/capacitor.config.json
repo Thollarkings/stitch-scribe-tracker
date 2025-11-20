@@ -1,6 +1,6 @@
 {
-	"appId": "com.tailorsuite.app",
-	"appName": "TailorSuite",
+	"appId": "com.tailorssuite.app",
+	"appName": "Tailors Suite",
 	"webDir": "dist",
 	"server": {
 		"androidScheme": "https"

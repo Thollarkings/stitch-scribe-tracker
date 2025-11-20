@@ -35,7 +35,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <ErrorBoundary>
-            <BrowserRouter basename={(import.meta.env.VITE_BASE || "/stitch-scribe-tracker").replace(/\/$/, "")}>
+            <BrowserRouter basename={(import.meta.env.VITE_BASE || "/").replace(/\/$/, "")}>
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={

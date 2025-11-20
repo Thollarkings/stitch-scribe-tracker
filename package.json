@@ -1,17 +1,26 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "homepage": "https://github.com/Thollarkings/stitch-scribe-tracker",
   "scripts": {
     "dev": "vite",
     "preview": "vite preview",
     "build": "vite build",
+    "build:android": "vite build --mode android",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist -r https://github.com/Thollarkings/stitch-scribe-tracker.git -b gh-pages"
+    "deploy": "gh-pages -d dist -r https://github.com/Thollarkings/stitch-scribe-tracker.git -b gh-pages",
+    "cap:sync": "npx cap sync android",
+    "open:android": "npx cap open android",
+    "android:build": "npm run build:android && npm run cap:sync",
+    "android:release": "cd android && ./gradlew bundleRelease",
+    "android:release-apk": "cd android && ./gradlew assembleRelease",
+    "build:release": "npm run android:build && npm run android:release",
+    "generate-keystore": "bash scripts/generate-keystore.sh",
+    "setup-keystore": "bash scripts/create-keystore-properties.sh"
   },
   "screenshots": [
     {
@@ -27,6 +36,7 @@
     }
   ],
   "dependencies": {
+    "@capacitor/android": "^7.4.4",
     "@capacitor/cli": "^7.2.0",
     "@capacitor/core": "^7.2.0",
     "@hookform/resolvers": "^3.9.0",

@@ -1,9 +1,9 @@
 {
   "name": "TailorSuite",
   "short_name": "TailorSuite",
-  "start_url": "/stitch-scribe-tracker/",
+  "start_url": "/",
   "display": "fullscreen",
-  "scope": "/stitch-scribe-tracker/",
+  "scope": "/",
   "description": "TailorSuite is a complete toolset that simplifies tailoring by managing measurements, tracking progress and clients, and generating invoices with your custom logo—all you need for a perfect fit.",
   "background_color": "#ffffff",
   "theme_color": "#3F9D52",

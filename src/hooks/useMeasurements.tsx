@@ -90,8 +90,8 @@ export const useMeasurements = () => {
       console.log('Data to save after processing:', JSON.stringify(dataToSave));
 
       if (USE_CONVEX) {
-        // All fields are allowed by Convex validator; only strip the local id if present
-        const { id: _localId, _id: _convexId, _creationTime: _ct, ...allowed } = dataToSave as any;
+        // Strip server-managed fields (id, _id, _creationTime, createdAt, updatedAt, userId) before sending
+        const { id: _localId, _id: _convexId, _creationTime: _ct, createdAt: _ca, updatedAt: _ua, userId: _uid, ...allowed } = dataToSave as any;
         if (isEditing && dataToSave.id) {
           await convexUpdate!({ id: dataToSave.id, ...allowed });
           toast.success("Client measurements updated successfully");
