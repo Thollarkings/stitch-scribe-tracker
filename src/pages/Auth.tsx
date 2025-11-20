@@ -80,7 +80,7 @@ const Auth = () => {
           <img 
             src="/logo.png" 
             alt="Tailors Suite" 
-            className="h-84 w-84 mx-auto rounded-[30%] border-2 border-white/20 object-cover"
+            className="h-84 w-84 mx-auto object-cover"
             style={{ filter: 'drop-shadow(0 0 10px rgba(4, 3, 0, 0.5))' }}
           /> 
           <h1 className="text-3xl font-bold font-serif -mt-10">Tailors Suite</h1>

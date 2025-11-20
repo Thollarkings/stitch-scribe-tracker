@@ -9,12 +9,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- SplashActivity - Shows first with custom splash screen -->
         <activity
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
-            android:name=".MainActivity"
-            android:label="@string/title_activity_main"
-            android:theme="@style/AppTheme.NoActionBarLaunch"
-            android:launchMode="singleTask"
+            android:name=".SplashActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
             android:exported="true">
 
             <intent-filter>
@@ -22,6 +20,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+        </activity>
+
+        <!-- MainActivity - Main app activity -->
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:launchMode="singleTask"
+            android:exported="false">
         </activity>
 
         <provider

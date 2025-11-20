@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 
+       Using fill_vertical to fill screen height while maintaining aspect ratio.
+       This mimics centerCrop behavior - fills the space and crops if needed.
+    -->
+    <item>
+        <bitmap
+            android:src="@drawable/splash"
+            android:gravity="fill_vertical|center_horizontal" />
+    </item>
+</layer-list>

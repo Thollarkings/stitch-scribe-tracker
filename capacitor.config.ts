@@ -10,6 +10,21 @@ const config: CapacitorConfig = {
     // url: 'http://192.168.1.100:5173',
     // cleartext: true,
   },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 4000,
+      launchAutoHide: true,
+      backgroundColor: "#ffffff",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_INSIDE",
+      showSpinner: false,
+      androidSpinnerStyle: "large",
+      iosSpinnerStyle: "small",
+      spinnerColor: "#999999",
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
+  },
 };
 
 export default config;
